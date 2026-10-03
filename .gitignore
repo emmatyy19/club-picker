@@ -32,7 +32,8 @@ test-results.xml
 *.pem
 *.key
 
-# Personal shots, photographs, locations, and notes
+# Original exports, location/account information, and working notes
+# Prepared numerical measurements may be tracked under data/public/.
 private/
 data/raw/
 data/private/
