@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  foundation:
+    name: Scaffold checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+
+      - name: Install Python and locked dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Type check
+        run: uv run pyright
+
+      - name: Build package
+        run: uv build
+
+      - name: Smoke test built wheel
+        run: |
+          uv venv --python 3.12 "${RUNNER_TEMP}/club-picker-smoke"
+          uv pip install --python "${RUNNER_TEMP}/club-picker-smoke/bin/python" dist/*.whl
+          "${RUNNER_TEMP}/club-picker-smoke/bin/python" -c "import club_picker"
+
+      # Add the full pytest suite here with the first behavior implementation.

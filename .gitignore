@@ -1,0 +1,66 @@
+# Python and build outputs
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# Environments and tool caches
+.venv/
+.uv-cache/
+.pytest_cache/
+.ruff_cache/
+.pyright/
+.coverage
+coverage.xml
+htmlcov/
+test-results.xml
+.testmondata*
+.ipynb_checkpoints/
+
+# Editor and OS state
+.DS_Store
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Credentials and local settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Personal shots, photographs, locations, and notes
+private/
+data/raw/
+data/private/
+data/interim/
+data/processed/
+uploads/
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Generated profiles, models, and experiment outputs
+artifacts/
+models/
+checkpoints/
+runs/
+logs/
+*.pt
+*.pth
+*.onnx
+
+# Future frontend and temporary outputs
+node_modules/
+.next/
+tmp/
+*.log
