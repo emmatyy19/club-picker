@@ -101,18 +101,18 @@ that understands their actual shots.
 
 ## Verification
 
-For the current scaffold, run:
+For the current data foundation, run:
 
 ```bash
 uv run ruff format --check .
 uv run ruff check .
 uv run pyright
+uv run pytest --cov=club_picker --cov-report=term-missing
 uv build
 uv run python -c "import club_picker"
 ```
 
-When implementing the first behavior, add meaningful deterministic tests under
-`tests/`, mirroring `src/club_picker/`, and enable full pytest execution in CI
-and pre-commit in the same change. Test data validation, unit conversion,
-duplicate imports, chronology, and recommendation boundary cases. Do not add
-placeholder tests solely to make an empty test suite pass.
+Add meaningful deterministic tests under `tests/`, mirroring `src/club_picker/`.
+The full pytest suite runs in CI and pre-commit. Test data validation, unit
+conversion, duplicate imports, chronology, and future recommendation boundary
+cases alongside their implementations. Do not add placeholder tests.

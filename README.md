@@ -35,8 +35,10 @@ actually helps when I am standing over the next shot.
 
 ## Where it stands
 
-The project is at the beginning. The repository and development tools are set
-up; data imports, model experiments, and the app are still ahead.
+The first data foundation is working: I can import a manual shot file, avoid
+counting the same shots twice, and inspect each club's recorded carry range.
+So far it is tested with invented data. My real exports, model experiments,
+and the phone app are next.
 
 - [Project journey](docs/README.md): the decisions, experiments, and lessons as
   the project develops.

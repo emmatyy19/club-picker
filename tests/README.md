@@ -1,8 +1,10 @@
 # Tests
 
-There is no application behavior to test yet. Add deterministic synthetic tests
-with the first importer or recommendation implementation, mirror the package
-structure, and enable full pytest execution in CI and pre-commit in that change.
+The suite uses invented measurements and temporary private stores. It covers
+validation, unit conversion, missing values, CSV errors, repeated imports,
+identity conflicts, original-file retention, transactional rollback, session
+chronology, compatible audit groups, and the command-line workflow.
 
-Prioritize data validation, units, repeated imports, session chronology, and
-hazard boundaries. Do not add placeholder tests for the package scaffold.
+Run `uv run pytest --cov=club_picker --cov-report=term-missing`. The same behavior
+suite runs in CI and pre-commit. Recommendation and hazard-boundary tests belong
+with their future implementations.

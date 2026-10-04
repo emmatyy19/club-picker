@@ -1,8 +1,8 @@
 # Development Setup
 
-The current repository contains an installable Python package scaffold and
-development tools. It does not yet provide a shot importer, recommender, or
-application interface.
+The package provides a local manual CSV importer, private SQLite storage, and
+a shot-data audit. See the [import guide](data-import.md) for a runnable synthetic
+walkthrough. Provider adapters, the recommender, and phone interface are pending.
 
 ## Environment
 
@@ -21,9 +21,9 @@ Reusable code lives under `src/club_picker/`. Configuration is centralized in
 
 - Ruff handles formatting, linting, import order, and NumPy-style docstrings.
 - Pyright runs in strict mode.
-- pre-commit runs Ruff and Pyright before a commit.
-- pytest and coverage tools are installed for future behavior tests.
-- GitHub Actions checks the scaffold on pull requests and pushes to `main`.
+- pre-commit runs Ruff, Pyright, and the full pytest suite before a commit.
+- pytest checks import behavior using invented observations and temporary stores.
+- GitHub Actions runs these checks on pull requests and pushes to `main`.
 
 VS Code settings select `.venv/bin/python`, enable strict type checking, and
 use Ruff for formatting and import organization. The recommended extensions
@@ -35,14 +35,15 @@ are Python, Pylance, and Ruff.
 uv run ruff format --check .
 uv run ruff check .
 uv run pyright
+uv run pytest --cov=club_picker --cov-report=term-missing
 uv build
 uv run python -c "import club_picker"
 ```
 
-CI also imports the built wheel in a clean environment. There are no behavior
-tests yet, so these checks verify the foundation, not recommendation accuracy.
-The first implementation should add meaningful synthetic tests under `tests/`
-and enable the full pytest suite in CI and pre-commit in the same change.
+CI also imports the built wheel in a clean environment. Tests cover invalid
+inputs, unit conversion, missing values, repeated imports, conflicts, transaction
+rollback, original-file integrity, grouping, chronology, and the CLI workflow.
+They verify the data foundation, not recommendation accuracy.
 
 ## Data and contributions
 
