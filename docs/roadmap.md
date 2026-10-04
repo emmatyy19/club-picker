@@ -7,9 +7,10 @@ the way.
 
 ## Current position
 
-The repository, Python package scaffold, development tools, and automated
-checks are in place. No personal shot data has been imported and no models or
-recommendations have been evaluated yet.
+The local manual importer, private storage, and data audit are implemented and
+tested with invented shots. No personal shot data has been imported and no
+models or recommendations have been evaluated yet. The
+[import guide](data-import.md) describes the working data path.
 
 ## From practice data to a phone app
 

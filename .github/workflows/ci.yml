@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   foundation:
-    name: Scaffold checks
+    name: Data foundation checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -38,6 +38,9 @@ jobs:
       - name: Type check
         run: uv run pyright
 
+      - name: Test behavior
+        run: uv run pytest --cov=club_picker --cov-report=term-missing
+
       - name: Build package
         run: uv build
 
@@ -46,5 +49,4 @@ jobs:
           uv venv --python 3.12 "${RUNNER_TEMP}/club-picker-smoke"
           uv pip install --python "${RUNNER_TEMP}/club-picker-smoke/bin/python" dist/*.whl
           "${RUNNER_TEMP}/club-picker-smoke/bin/python" -c "import club_picker"
-
-      # Add the full pytest suite here with the first behavior implementation.
+          "${RUNNER_TEMP}/club-picker-smoke/bin/club-picker" template

@@ -1,0 +1,9 @@
+session_id,shot_id,club_id,club_label,source,distance_unit,carry,session_date,shot_intent,normalization,ball_compensation,carry_side,session_mode,surface
+invented-001,001,iron-7-v1,7 iron,manual,yd,140,2000-01-01,full,unadjusted,off,-8,synthetic,mat
+invented-001,002,iron-7-v1,7 iron,manual,yd,138,2000-01-01,full,unadjusted,off,4,synthetic,mat
+invented-001,003,iron-7-v1,7 iron,manual,yd,65,2000-01-01,full,unadjusted,off,12,synthetic,mat
+invented-001,004,iron-8-v1,8 iron,manual,yd,128,2000-01-01,full,unadjusted,off,-3,synthetic,mat
+invented-001,005,iron-9-v1,9 iron,manual,yd,116,2000-01-01,full,unadjusted,off,,synthetic,mat
+invented-002,001,iron-7-v1,7 iron,manual,yd,142,2000-01-08,full,unadjusted,off,6,synthetic,mat
+invented-002,002,iron-8-v1,8 iron,manual,yd,130,2000-01-08,full,unadjusted,off,0,synthetic,mat
+invented-002,003,iron-9-v1,9 iron,manual,yd,118,2000-01-08,full,unadjusted,off,2,synthetic,mat
