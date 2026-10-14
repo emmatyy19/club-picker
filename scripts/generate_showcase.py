@@ -50,6 +50,7 @@ def generate() -> None:
                         "carry_m": round(carry, 2),
                         "total_m": round(total, 2),
                         "total_side_m": round(side, 2),
+                        "total_distance_geometry": "radial",
                         "carry_side_m": None,
                         "intent": "unknown",
                         "normalization": "unknown",

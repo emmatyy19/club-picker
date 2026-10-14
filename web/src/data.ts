@@ -27,6 +27,7 @@ export const shotSchema = z
     carry_side_m: value.nullable(),
     total_m: value.nonnegative().nullable(),
     total_side_m: value.nullable(),
+    total_distance_geometry: z.enum(["radial", "unknown"]).optional(),
     intent: z.enum(["full", "partial", "punch", "experiment", "unknown"]),
     normalization: z.enum(["normalized", "unadjusted", "unknown"]),
     compensation: z.enum(["on", "off", "unknown"]),
@@ -228,7 +229,8 @@ export function overheadPoint(
 ): [number, number] | null {
   if (
     shot.source !== "trackman" &&
-    !(shot.source === "toptracer" && metric === "total")
+    !(shot.source === "toptracer" && metric === "total") &&
+    !(shot.total_distance_geometry === "radial" && metric === "total")
   )
     return null;
   const r = distance(shot, metric, unit),

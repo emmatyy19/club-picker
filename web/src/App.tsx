@@ -822,6 +822,13 @@ export function App() {
                   </span>
                 </Accordion.Control>
                 <Accordion.Panel>
+                  {import.meta.env.MODE === "showcase" && (
+                    <p className="showcase-note">
+                      <strong>Synthetic showcase</strong> · Generated from my
+                      private performance summaries. Shots and dates are
+                      invented.
+                    </p>
+                  )}
                   <div className="filters">
                     <div className="section-top selection-actions">
                       <Button variant="default" size="xs" onClick={backToChart}>
@@ -942,6 +949,13 @@ export function App() {
                   </span>
                 </Accordion.Control>
                 <Accordion.Panel>
+                  {import.meta.env.MODE === "showcase" && (
+                    <p className="showcase-note">
+                      <strong>Synthetic showcase</strong> · Generated from my
+                      private performance summaries. Shots and dates are
+                      invented.
+                    </p>
+                  )}
                   <Timeline
                     shots={all}
                     filters={filters}

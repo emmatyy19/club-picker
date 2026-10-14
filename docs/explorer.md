@@ -273,3 +273,13 @@ npm run build --prefix web
 
 The [development guide](development.md) lists the Python checks. Frontend checks
 also run in CI, using invented fixtures with no dependency on private files.
+
+
+### Explicit total geometry
+
+The snapshot may include `total_distance_geometry: "radial"` when the data's
+construction or reviewed source establishes that total is straight-line distance
+from the start. The synthetic showcase uses this field. Omitted or `unknown`
+geometry does not qualify otherwise unverified manual data for overhead. This
+field says nothing about carry geometry. Existing Trackman and reviewed Toptracer
+total handling is unchanged.

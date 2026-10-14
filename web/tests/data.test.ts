@@ -294,3 +294,28 @@ describe("overhead geometry", () => {
     }
   });
 });
+
+it("uses explicit synthetic total geometry without assuming manual carry geometry", () => {
+  const radial = {
+    ...shot,
+    total_m: 100,
+    total_side_m: 20,
+    carry_side_m: 10,
+    total_distance_geometry: "radial" as const,
+  };
+  const validated = parseSnapshot({
+    kind: "club-picker-explorer",
+    version: 1,
+    distance_unit: "m",
+    shots: [radial],
+  }).shots[0];
+  expect(overheadPoint(validated, "total", "m")).toEqual([20, Math.sqrt(9600)]);
+  expect(overheadPoint(validated, "carry", "m")).toBeNull();
+  expect(
+    overheadPoint(
+      { ...validated, total_distance_geometry: "unknown" },
+      "total",
+      "m",
+    ),
+  ).toBeNull();
+});
