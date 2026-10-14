@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from club_picker.audit import audit_shots
+from club_picker.explorer import explorer_snapshot
 from club_picker.importing import ADAPTER, parse_csv
 from club_picker.shots import (
     COLUMNS,
@@ -15,9 +16,19 @@ from club_picker.shots import (
     Intent,
     Normalization,
     Quality,
+    Shot,
     Unit,
 )
 from club_picker.storage import Store
+from club_picker.trackman import (
+    merge_snapshot,
+    object_value,
+    parse_report,
+    read_object,
+    save_snapshot,
+    text_value,
+)
+from club_picker.trackman_fetch import load_report
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -38,9 +49,118 @@ def main(argv: list[str] | None = None) -> int:
         subparser.add_argument("file", type=Path)
     audit = commands.add_parser("audit", help="Print a private JSON data inventory")
     audit.add_argument("--unit", choices=list(Unit), default=Unit.YARDS)
+    snapshot = commands.add_parser(
+        "snapshot", help="Export reviewed CSVs for the local explorer"
+    )
+    snapshot.add_argument("files", nargs="+", type=Path)
+    snapshot.add_argument(
+        "--session-set",
+        action="append",
+        required=True,
+        help="Owner-confirmed SOURCE/SESSION=SET assignment; repeat per session",
+    )
+    snapshot.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="Private output file, outside the web source/build directories",
+    )
+    trackman = commands.add_parser(
+        "trackman", help="Preview or merge a shared Trackman report"
+    )
+    trackman.add_argument(
+        "folder", type=Path, help="Private folder containing report-link.txt"
+    )
+    trackman.add_argument(
+        "--config", type=Path, default=Path("data/private/trackman-import.json")
+    )
+    trackman.add_argument(
+        "--snapshot", type=Path, default=Path("data/private/explorer/snapshot.json")
+    )
+    trackman.add_argument(
+        "--set-id", help="Override an explicitly configured standing default"
+    )
+    trackman.add_argument(
+        "--apply", action="store_true", help="Back up and update the explorer library"
+    )
+    trackman.add_argument(
+        "--refetch", action="store_true", help="Refresh the private report cache"
+    )
     args = parser.parse_args(argv)
     store = Store(Path(args.data_dir))
     try:
+        if args.command == "trackman":
+            config = read_object(args.config)
+            cached = load_report(args.folder, refetch=args.refetch)
+            batch = parse_report(
+                object_value(cached.get("report")),
+                url=text_value(cached.get("resolved_url"), limit=8192),
+                config=config,
+                set_id=args.set_id,
+            )
+            existing: dict[str, object] = (
+                read_object(args.snapshot)
+                if args.snapshot.exists()
+                else {
+                    "kind": "club-picker-explorer",
+                    "version": 1,
+                    "distance_unit": "m",
+                    "shots": [],
+                }
+            )
+            merged, added = merge_snapshot(existing, batch["shots"])
+            if args.apply and added:
+                save_snapshot(args.snapshot, merged)
+            print(
+                json.dumps(
+                    {
+                        "report_shots": len(batch["shots"]),
+                        "new_shots": added,
+                        "duplicates": len(batch["shots"]) - added,
+                        "library_shots": len(merged["shots"]),
+                        "applied": bool(args.apply),
+                        "clubs": sorted(
+                            {str(row["club_label"]) for row in batch["shots"]}
+                        ),
+                        "dates": sorted(
+                            {str(row["session_date"]) for row in batch["shots"]}
+                        ),
+                        "sets": sorted({str(row["set_id"]) for row in batch["shots"]}),
+                    },
+                    indent=2,
+                )
+            )
+            return 0
+        if args.command == "snapshot":
+            assignments: dict[tuple[str, str], str] = {}
+            for assignment in args.session_set:
+                session, separator, set_id = assignment.partition("=")
+                source, slash, session_id = session.partition("/")
+                if (
+                    not separator
+                    or not slash
+                    or not source
+                    or not session_id
+                    or not set_id
+                ):
+                    raise ValueError("Use SOURCE/SESSION=SET for each --session-set")
+                key = (source, session_id)
+                if key in assignments and assignments[key] != set_id:
+                    raise ValueError("Conflicting session-set assignments")
+                assignments[key] = set_id
+            shots: list[Shot] = []
+            for input_file in args.files:
+                batch = parse_csv(input_file.read_bytes())
+                if batch.errors:
+                    raise ValueError("; ".join(batch.errors))
+                shots.extend(row.shot for row in batch.rows)
+            result = explorer_snapshot(shots, session_sets=assignments)
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(result, indent=2) + "\n")
+            print(
+                json.dumps({"shots": len(result["shots"]), "output": str(args.output)})
+            )
+            return 0
         if args.command == "template":
             csv.writer(sys.stdout).writerow(COLUMNS)
             return 0

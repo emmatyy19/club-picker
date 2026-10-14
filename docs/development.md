@@ -2,7 +2,9 @@
 
 The package provides a local manual CSV importer, private SQLite storage, and
 a shot-data audit. See the [import guide](data-import.md) for a runnable synthetic
-walkthrough. Provider adapters, the recommender, and phone interface are pending.
+walkthrough. The [local explorer](explorer.md) adds a React/TypeScript UI over
+reviewed snapshots. Provider adapters, the recommender, and phone installation
+are pending.
 
 ## Environment
 
@@ -16,6 +18,17 @@ uv run pre-commit install
 
 Reusable code lives under `src/club_picker/`. Configuration is centralized in
 `pyproject.toml`, and exact dependency versions are recorded in `uv.lock`.
+
+## Explorer development
+
+Use Node 22.12+ or Node 24. Frontend dependencies live in `web/package.json` and
+`web/package-lock.json`; use `npm ci --prefix web` for reproducible installs.
+Run `npm run dev --prefix web`, then open <http://127.0.0.1:5173>.
+The [explorer guide](explorer.md) covers sample data, backups, and local storage.
+
+Run `npm run format:check --prefix web`, `npm test --prefix web`, and
+`npm run build --prefix web` before proposing frontend changes. TypeScript is
+strict; Vitest tests use invented shots. Frontend checks run in CI.
 
 ## Tooling
 

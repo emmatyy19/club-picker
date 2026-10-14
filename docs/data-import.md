@@ -2,8 +2,9 @@
 
 I can now preview individual shots, keep a private copy of the original file,
 and inspect what evidence I have for each club. This first path uses a small
-manual CSV format. It has been tested with invented data; Trackman and
-Toptracer export mappings still need validation against actual files.
+manual CSV format. A separate shared Trackman report importer now feeds the
+local explorer, verified against a real browser report. Toptracer screenshots
+still use reviewed extraction.
 
 ## Try the workflow
 
@@ -91,9 +92,30 @@ count; only `written_shots` confirms additions.
 Unknown columns are rejected so that a provider field cannot silently acquire
 the wrong meaning. Keep original provider exports intact. Do not delete their
 extra columns to make this importer accept them; prepare a separate manual file
-only when the mapping is understood. Native provider adapters are still pending.
+only when the mapping is understood. The Trackman command below handles the
+verified shared-report format separately.
 
 ## Identity and corrections
+
+Club identity is independent of the service used to measure a shot. Two sets
+can both contain a 7-iron, so use distinct identities such as `set-a-7i-v1` and
+`set-b-7i-v1` while keeping `source` separate. The current CSV stores the physical
+club identity in `club_id`; set membership can be kept in a private registry.
+Changing providers does not change a physical club's identity.
+
+For ongoing sessions, confirm the set used before import or use an explicitly
+owner-authorized standing default. A historical mapping
+from provider to set is not a standing default for future sessions. A PDF and
+browser link for the same session must share shot identities and be reconciled,
+not appended as two sessions.
+
+For my reviewed local history, I group reports and games on the same displayed
+calendar date into one session per provider and physical set. Exiting and
+reopening a practice program does not create a second practice day. I preserve
+original report/game identities in the private extraction ledger, so restarted
+shot numbers do not collide. Screenshot dates take precedence over folder names.
+This is an owner-approved preparation rule, not automatic date merging in the
+CSV importer. Exact dates and the source mapping stay private.
 
 A shot is identified by source, session ID, shot ID, normalization state, and
 ball-compensation state. Reimporting the same records, even under a different
@@ -140,6 +162,64 @@ is Git-ignored and outside the built package. Custom `--data-dir` paths are your
 responsibility to keep private. Audits include private session dates and labels,
 so keep redirected output under ignored storage as well.
 
-No network connection or account credentials are used by these commands.
+The CSV and database commands need no network connection or account credentials.
+The Trackman command below fetches a shared report without account credentials.
 Public datasets require a separate allowlisted transformation under the
 [data policy](data-policy.md); there is no automatic public export yet.
+
+
+## Shared Trackman reports
+
+I can now import a Trackman shared activity report directly into my local
+explorer. This uses the endpoint observed in Trackman's report page, not a
+published, supported API. It worked with my supplied report; other report
+formats may need another adapter. It does not search my account for sessions.
+
+1. Create `data/raw/trackman/YYYY-MM-DD/` and put the shared URL in
+   `report-link.txt`.
+2. Configure the physical clubs in the ignored `data/private/trackman-import.json`.
+   A default is only appropriate when the owner explicitly authorizes it:
+
+   ```json
+   {
+     "version": 1,
+     "default_set_id": "practice-bag",
+     "club_sets": {
+       "practice-bag": {
+         "7Iron": {"club_id": "practice-bag-7i", "club_label": "7 iron"}
+       }
+     }
+   }
+   ```
+
+3. Preview, then apply from the repository root:
+
+   ```bash
+   uv run club-picker trackman data/raw/trackman/YYYY-MM-DD
+   uv run club-picker trackman data/raw/trackman/YYYY-MM-DD --apply
+   ```
+
+4. Refresh data in the explorer. This updates its private snapshot, not the
+   separate SQLite store. No browser Import/Export step is needed.
+
+`--set-id` overrides the configured default for another configured bag. Unknown
+clubs stop the import until their physical identity is supplied. Group dates
+inside the report determine sessions; same-date groups merge per provider/set.
+The preview lists dates and sets so a mislabeled folder is visible before applying.
+
+The first run downloads `trackman-report.json` beside the link. Later runs use
+that cache offline; `--refetch` refreshes it. Keep the folder private: the response
+contains identifying information beyond the measurements. Custom config, source,
+and `--snapshot` paths are also the caller's responsibility to keep private.
+Backups are created beside the snapshot before atomic replacement.
+
+The importer follows the link's normalization choice, preserves full-precision
+SI measurements, and keeps absent fields unknown. It includes carry, total,
+both sideways offsets, ball speed, spin, launch, apex, landing angle, hang time,
+and curve when available. Raw trajectories remain in the source cache.
+
+Stable provider shot IDs prevent duplicates, including overlapping shared
+reports. Changed measurements or identities stop the import. Older manually
+extracted sessions need their private ID mapping reconciled before this importer
+can revisit the same date and bag. It deliberately refuses that overlap rather
+than guessing which shots match. PDFs still need a separate extraction route.

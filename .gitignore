@@ -65,3 +65,8 @@ node_modules/
 .next/
 tmp/
 *.log
+
+# Local frontend checks and compiled state
+*.tsbuildinfo
+web/playwright-report/
+web/test-results/

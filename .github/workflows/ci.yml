@@ -50,3 +50,22 @@ jobs:
           uv pip install --python "${RUNNER_TEMP}/club-picker-smoke/bin/python" dist/*.whl
           "${RUNNER_TEMP}/club-picker-smoke/bin/python" -c "import club_picker"
           "${RUNNER_TEMP}/club-picker-smoke/bin/club-picker" template
+
+  explorer:
+    name: Local explorer checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build

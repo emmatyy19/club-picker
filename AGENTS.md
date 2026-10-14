@@ -49,6 +49,17 @@ These instructions apply to the entire repository.
 - Retain genuine mishits; exclude measurement errors with recorded reasons.
 - Preserve club identity, session, source, units, shot intent, and normalization
   settings. Missing information is unknown, not zero or an invented value.
+- Club identity is independent of measurement provider. Keep physical club sets
+  separate, including clubs with the same label. Use stable set-specific club IDs;
+  never infer that two 7-irons are the same club because their labels match.
+- Historical club-set mappings require an explicit owner instruction. For each
+  ongoing session, obtain the owner's club-set confirmation before importing
+  unless they already supplied it for that session or explicitly authorized a
+  standing default. Do not reuse a historical
+  source-to-set mapping as an automatic default for new sessions. If present,
+  consult `private/planning/data/club-sets.json` for the local registry.
+- PDF, browser report, and screenshots of one session are complementary evidence,
+  not separate sessions. Reuse session and shot identities across extraction routes.
 - Separate chronological sessions for training and evaluation. Do not randomly
   split neighboring shots and describe the result as future performance.
 - Fit trend weights and thresholds using development data only.

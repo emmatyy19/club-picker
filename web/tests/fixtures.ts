@@ -1,0 +1,32 @@
+import type { Shot } from "../src/data";
+export const shot: Shot = {
+  session_id: "invented-1",
+  shot_id: "1",
+  club_id: "a-7",
+  club_label: "7 iron",
+  set_id: "a",
+  source: "manual",
+  source_unit: "yd",
+  session_date: "2026-01-01",
+  carry_m: 128.016,
+  carry_side_m: null,
+  total_m: null,
+  total_side_m: null,
+  intent: "full",
+  normalization: "unadjusted",
+  compensation: "unknown",
+  carry_basis: "unknown",
+  total_basis: "unknown",
+  quality: "usable",
+  exclusion_reason: "",
+  session_mode: "unknown",
+  normalization_settings: "unknown",
+  ball_type: "unknown",
+  surface: "unknown",
+};
+export const snapshot = (shots: Shot[]) => ({
+  kind: "club-picker-explorer",
+  version: 1,
+  distance_unit: "m",
+  shots,
+});
