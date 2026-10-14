@@ -1,16 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
   <title>Bunny caddie</title>
   <circle cx="40" cy="40" r="39" fill="#e6efe5"/>
-  <g stroke="#285c48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M27 33C20 21 20 7 25 6c6-1 11 15 11 25M44 30C43 16 48 4 53 7c6 4 1 18-2 27" fill="#fffaf0"/>
-    <path d="M27 14l4 13M51 14l-3 12" stroke="#ddb5a4" stroke-width="3"/>
-    <path d="M21 43c0-12 8-20 19-20s20 8 20 20c0 11-8 18-20 18S21 54 21 43Z" fill="#fffaf0"/>
-    <path d="M23 32c8-6 20-7 31-1l-1 7c-12-3-20-3-30 0z" fill="#347d6a"/>
-    <path d="M31 36c11-3 25-1 32 4-10 3-23 1-32-1z" fill="#88ac87"/>
-    <path d="M30 45v2m18-2v2" stroke-width="3"/>
-    <path d="m37 49 3 2 3-2M40 51v3m0 0-3 1m3-1 3 1" stroke-width="1.8"/>
-    <circle cx="40" cy="63" r="16" fill="#fffef8"/>
-    <path d="M25 51c-5-2-9 4-5 7 4 3 10-3 5-7ZM55 51c5-2 9 4 5 7-4 3-10-3-5-7Z" fill="#fffaf0"/>
+  <g stroke="#285c48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Ears sit behind the face and visor. -->
+    <path d="M27 33C23 25 20 10 24 7C29 3 35 18 36 30" fill="#fffaf0"/>
+    <path d="M44 30C45 18 49 5 54 7C60 10 54 26 51 33" fill="#fffaf0"/>
+    <path d="M26 13C27 17 29 22 30 26M53 13C52 18 50 23 49 26" stroke="#ddb5a4" stroke-width="2.8"/>
+    <path d="M20 43C20 32 28 25 40 25S60 32 60 43C60 55 52 62 40 62S20 55 20 43Z" fill="#fffaf0"/>
+    <!-- The band and brim share the same curved seam, without a floating edge. -->
+    <path d="M23 32Q40 25 57 32V39Q40 33 23 39Z" fill="#347d6a"/>
+    <path d="M23 39Q40 33 57 39L63 42Q44 47 23 39Z" fill="#88ac87"/>
+    <path d="M31 47V48.5M48 47V48.5" stroke-width="2.8"/>
+    <path d="M37.5 48.5H42.5L40 50.8Z" fill="#dca4aa" stroke="none"/>
+    <!-- The ball leaves the nose visible and stays inside the badge. -->
+    <circle cx="40" cy="65" r="13" fill="#fffef8"/>
+    <path d="M26 53C22 51 19 54 21 57C23 60 28 59 29 57C30 55 28 54 26 53Z" fill="#fffaf0"/>
+    <path d="M54 53C58 51 61 54 59 57C57 60 52 59 51 57C50 55 52 54 54 53Z" fill="#fffaf0"/>
   </g>
-  <g stroke="#c7d5c5" stroke-width="1.6" stroke-linecap="round"><path d="M34 58h1m8-3h1m5 6h1m-12 5h1m-9 2h1m14 5h1m-8 3h1m14-10h1"/></g>
+  <!-- Staggered round dimples are inset from the ball's outline. -->
+  <g fill="#cbd9ca">
+    <circle cx="36" cy="57" r="1.1"/><circle cx="44" cy="57" r="1.1"/>
+    <circle cx="32" cy="62" r="1.1"/><circle cx="40" cy="62" r="1.1"/><circle cx="48" cy="62" r="1.1"/>
+    <circle cx="36" cy="67" r="1.1"/><circle cx="44" cy="67" r="1.1"/>
+    <circle cx="33" cy="72" r="1.1"/><circle cx="40" cy="72" r="1.1"/><circle cx="47" cy="72" r="1.1"/>
+  </g>
 </svg>
