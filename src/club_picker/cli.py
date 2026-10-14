@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from club_picker.audit import audit_shots
+from club_picker.explorer import explorer_snapshot
 from club_picker.importing import ADAPTER, parse_csv
 from club_picker.shots import (
     COLUMNS,
@@ -15,6 +16,7 @@ from club_picker.shots import (
     Intent,
     Normalization,
     Quality,
+    Shot,
     Unit,
 )
 from club_picker.storage import Store
@@ -38,9 +40,55 @@ def main(argv: list[str] | None = None) -> int:
         subparser.add_argument("file", type=Path)
     audit = commands.add_parser("audit", help="Print a private JSON data inventory")
     audit.add_argument("--unit", choices=list(Unit), default=Unit.YARDS)
+    snapshot = commands.add_parser(
+        "snapshot", help="Export reviewed CSVs for the local explorer"
+    )
+    snapshot.add_argument("files", nargs="+", type=Path)
+    snapshot.add_argument(
+        "--session-set",
+        action="append",
+        required=True,
+        help="Owner-confirmed SOURCE/SESSION=SET assignment; repeat per session",
+    )
+    snapshot.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="Private output file, outside the web source/build directories",
+    )
     args = parser.parse_args(argv)
     store = Store(Path(args.data_dir))
     try:
+        if args.command == "snapshot":
+            assignments: dict[tuple[str, str], str] = {}
+            for assignment in args.session_set:
+                session, separator, set_id = assignment.partition("=")
+                source, slash, session_id = session.partition("/")
+                if (
+                    not separator
+                    or not slash
+                    or not source
+                    or not session_id
+                    or not set_id
+                ):
+                    raise ValueError("Use SOURCE/SESSION=SET for each --session-set")
+                key = (source, session_id)
+                if key in assignments and assignments[key] != set_id:
+                    raise ValueError("Conflicting session-set assignments")
+                assignments[key] = set_id
+            shots: list[Shot] = []
+            for input_file in args.files:
+                batch = parse_csv(input_file.read_bytes())
+                if batch.errors:
+                    raise ValueError("; ".join(batch.errors))
+                shots.extend(row.shot for row in batch.rows)
+            result = explorer_snapshot(shots, session_sets=assignments)
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(result, indent=2) + "\n")
+            print(
+                json.dumps({"shots": len(result["shots"]), "output": str(args.output)})
+            )
+            return 0
         if args.command == "template":
             csv.writer(sys.stdout).writerow(COLUMNS)
             return 0

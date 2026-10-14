@@ -7,21 +7,40 @@ the way.
 
 ## Current position
 
-The local manual importer, private storage, and data audit are implemented and
-tested with invented shots. No personal shot data has been imported and no
-models or recommendations have been evaluated yet. The
+The local manual importer, private storage, and data audit are implemented.
+I have reviewed my first Trackman and Toptracer exports and explored an
+interactive prototype using those shots. The first local explorer now works,
+including browser persistence, private snapshot backup/restore, and descriptive
+session trends for distance, speed, sideways consistency, and available flight
+measurements. The overhead view includes a 40-yard fairway reference. No models or
+recommendations have been evaluated yet. The
 [import guide](data-import.md) describes the working data path.
 
-## From practice data to a phone app
+## See my shots together first
 
-The first milestone is a usable club profile built from individual shots.
-Trackman exports and manual entry are the starting routes. I will begin with
-three adjacent irons so I can understand the data and test the full experience
-before expanding to the rest of the bag.
+The first local shot explorer lets me see my practice data in
+one place, switch between carry and total, combine tags, and move through
+sessions on a timeline. Distances, dispersion, and individual shots should be
+easy to inspect, with my two physical club sets kept distinct.
 
-The next milestone is a small phone app that accepts a distance, compares
-clubs, and explains its recommendation. It should work from a downloaded
-profile when there is no connection on the course.
+This comes before recommendations. It is useful with the data I already have
+and lets me check what the data can actually support. Missing measurements
+should be visible, and a single session should not look like evidence of a trend.
+
+It starts on my computer, with local data import, storage, and backup. Next
+I want an installable phone experience that can reopen with my saved data and
+work without a connection. Hosting, accounts, and automatic sync can wait.
+Private shot history does not need to be published to make the app useful.
+
+## From the explorer to a caddie
+
+Once that foundation works, I want to enter a distance and see a club,
+alternatives, and the observed spread behind the suggestion. Three adjacent
+irons are a useful starting comparison when I have suitable data; they do not
+limit which clubs I can explore now.
+
+The recommendation should run locally from a saved profile, including when
+there is no connection on the course.
 
 ## From yardage to risk
 

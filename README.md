@@ -27,7 +27,7 @@ I would like the advice to change as my game changes, too.
 
 Further down the line, I would love to try it through my Meta Ray-Ban Display
 glasses: look at the hole, ask for advice, and see or hear a short recommendation.
-That is the longer-term idea. I am starting with a small app on my phone.
+That is the longer-term idea. I am starting by exploring my shots locally.
 
 It also gives me a reason to train models on something I care about. I am curious
 whether they can pick up changes in my game that I would miss, and whether that
@@ -35,10 +35,18 @@ actually helps when I am standing over the next shot.
 
 ## Where it stands
 
-The first data foundation is working: I can import a manual shot file, avoid
-counting the same shots twice, and inspect each club's recorded carry range.
-So far it is tested with invented data. My real exports, model experiments,
-and the phone app are next.
+I can now explore my reviewed shots in a local UI: carry and total, dispersion,
+club filters, and a session timeline. My two club sets stay separate, and missing
+measurements stay visible. Recommendations, model experiments, and offline phone
+use are still ahead.
+
+![My Shots explorer with synthetic seven-iron data](docs/images/synthetic-dispersion.jpg)
+
+*Synthetic shots generated from summary statistics of my own private data.
+Shots and dates are invented.*
+
+[More screenshots and how the demo data is made](docs/showcase.md) ·
+[Run the local explorer](docs/explorer.md).
 
 - [Project journey](docs/README.md): the decisions, experiments, and lessons as
   the project develops.
