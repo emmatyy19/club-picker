@@ -1,0 +1,12 @@
+{
+  "summaries": [
+    {"sessions": [[100, 120], [140, 160]], "expected": {"low": 100, "median": 130, "high": 160, "shots": 4, "sessions": 2}},
+    {"sessions": [[80, 80, 80, 80, 80, 80, 80, 80, 80], [120]], "expected": {"low": 80, "median": 100, "high": 120, "shots": 10, "sessions": 2}},
+    {"sessions": [[0, 90, 100, 110, 120]], "expected": {"low": 0, "median": 100, "high": 120, "shots": 5, "sessions": 1}}
+  ],
+  "targets": [
+    {"distance": 150, "playsLike": 160, "angle": 8, "unit": "yd", "expected": 146.304},
+    {"distance": 150, "playsLike": 140, "angle": -8, "unit": "m", "expected": 140},
+    {"distance": 150, "playsLike": null, "angle": 8, "unit": "yd", "expected": 137.16}
+  ]
+}

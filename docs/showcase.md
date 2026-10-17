@@ -92,3 +92,13 @@ No raw shot rows, actual dates, provider identifiers, report links, or locations
 are included in the dataset or screenshots. Aggregate performance is deliberately
 shared under my [data policy](data-policy.md); this is not a formal anonymization
 or differential-privacy guarantee.
+
+## Approach picker
+
+I can enter where I want to finish, a must-carry distance, and a landing area.
+The current picker shows typical carry beside reported total, with the observed
+share of carries that clear and land in range. This example uses a 125-yard
+finish target, 100-yard must-carry distance, and 105–120-yard landing area.
+The shots and dates are synthetic, not real course outcomes.
+
+![Current approach picker with synthetic carry and finish comparisons](images/synthetic-approach.jpg)

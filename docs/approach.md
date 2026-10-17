@@ -10,7 +10,9 @@ A club's average distance is useful, but it leaves out how often I finish short,
 long, left, or right. I want to keep those outcomes together so that a short
 shot that also misses right remains one observed outcome.
 
-My first baseline will use typical carry and the spread of my recorded shots.
+My first [local baseline](journey/004-a-first-approach-picker.md) uses
+session-balanced median carry and the spread of my recorded shots. It is
+implemented, but has not been validated as a next-shot prediction.
 Actual mishits belong in that picture. Different shot intents, such as a full
 swing and a deliberate punch, need separate treatment.
 
@@ -63,3 +65,22 @@ learn computer vision.
 
 Recognizing a tree does not tell me whether I can clear it. Measured geometry
 and a model of the ball's flight would still be needed for that decision.
+
+## What would make a recommendation useful?
+
+Getting onto the green is one useful outcome, but it treats very different misses
+as the same failure. I want a decision to account for proximity, playable misses,
+and costly hazards. The planned first risk model uses transparent costs for
+landing regions. Personalized expected strokes comes later, when I have evidence
+about my recovery shots and putting.
+
+The local picker now includes a front-to-back carry window: compare how often
+each club's shots fall short, within the window, or long. That is not yet a green-hit
+probability. Green width needs paired carry and sideways landing measurements;
+finishing on the green also depends on rollout. Missing carry-side measurements
+cannot be filled with total-side values.
+
+I will evaluate predictions on later sessions, including interval coverage and
+miss rates. Scenario comparisons can reveal tradeoffs, but cannot demonstrate
+lower scores or tell me what would have happened with an unplayed club. Actual
+course feedback will be needed for that.
