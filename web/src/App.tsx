@@ -13,6 +13,7 @@ import {
   Table,
   TextInput,
 } from "@mantine/core";
+import { ApproachPicker } from "./ApproachPicker";
 import { ShotChart } from "./Chart";
 import { MeasurementContext as Context } from "./MeasurementContext";
 import type { DispersionMode } from "./dispersion";
@@ -118,6 +119,7 @@ export function App() {
     [setNames, setSetNames] = useState<Record<string, string>>({});
   const [page, setPage] = useState(0),
     [savedView, setSavedView] = useState<Filters | null>(null);
+  const [workspace, setWorkspace] = useState("shots");
   const [details, setDetails] = useState(false);
   const [selectionPanels, setSelectionPanels] = useState<string[]>([]);
   const [trendDates, setTrendDates] = useState<string[] | null>(null);
@@ -396,7 +398,7 @@ export function App() {
       <main>
         <div className="page-heading">
           <div>
-            <h1>My Shots</h1>
+            <h1>{workspace === "shots" ? "My Shots" : "Approach picker"}</h1>
           </div>
           <Group gap="sm">
             {import.meta.env.DEV && (
@@ -495,685 +497,723 @@ export function App() {
                 </span>
               </div>
             </div>
-            <div className="explorer-grid" id="shot-visualization">
-              <section className="panel plot-panel">
-                <SegmentedControl
-                  className="chart-view-tabs"
-                  fullWidth
-                  size="md"
-                  aria-label="Chart view"
-                  value={prefs.view}
-                  onChange={(v) =>
-                    updatePrefs({ view: v as Preferences["view"] })
-                  }
-                  data={[
-                    { label: "Stats chart", value: "dispersion" },
-                    { label: "Overhead", value: "overhead" },
-                    { label: "Distances", value: "distance" },
-                    { label: "Trends", value: "trends" },
-                    { label: "Rankings", value: "rankings" },
-                  ]}
-                />
-                <div
-                  className="selection-shortcuts"
-                  aria-label="Current shot selection"
-                >
-                  <Button
-                    className="selection-shortcut"
-                    size="xs"
-                    variant="default"
-                    aria-label="Change shot filters"
-                    aria-expanded={selectionPanels.includes("filters")}
-                    aria-controls="shot-filters"
-                    title={filterExpression(filters)}
-                    onClick={() => revealSelection("filters")}
-                  >
-                    <span className="shortcut-label">Filters</span>
-                    <span className="shortcut-value">{filterSummary}</span>
-                    <span aria-hidden="true">↓</span>
-                  </Button>
-                  <Button
-                    className="selection-shortcut"
-                    size="xs"
-                    variant="default"
-                    aria-label="Change selected dates"
-                    aria-expanded={selectionPanels.includes("dates")}
-                    aria-controls="shot-dates"
-                    title={dateSummary}
-                    onClick={() => revealSelection("dates")}
-                  >
-                    <span className="shortcut-label">Dates</span>
-                    <span className="shortcut-value">{dateSummary}</span>
-                    <span aria-hidden="true">↓</span>
-                  </Button>
-                </div>
-                <div className="plot-controls chart-options">
-                  {prefs.view !== "trends" && prefs.view !== "rankings" && (
-                    <div className="control-field">
-                      <span className="control-label">Distance</span>
-                      <SegmentedControl
-                        size="xs"
-                        aria-label="Distance metric"
-                        value={prefs.metric}
-                        onChange={(v) => updatePrefs({ metric: v as Metric })}
-                        data={[
-                          { label: "Carry", value: "carry" },
-                          { label: "Total", value: "total" },
-                        ]}
-                      />
-                    </div>
-                  )}
-                  <Select
-                    label="Color by"
-                    size="xs"
-                    value={prefs.colorBy}
-                    data={dimensions.map((d) => ({
-                      value: d.field,
-                      label: d.label,
-                    }))}
+            <SegmentedControl
+              className="workspace-tabs"
+              aria-label="Workspace"
+              size="md"
+              value={workspace}
+              onChange={(value) => {
+                playback.dispatch({ type: "pause" });
+                setWorkspace(value);
+              }}
+              data={[
+                { label: "My Shots", value: "shots" },
+                { label: "Approach picker", value: "approach" },
+              ]}
+            />
+            <div hidden={workspace !== "approach"}>
+              <ApproachPicker shots={all} />
+            </div>
+            <div hidden={workspace !== "shots"}>
+              <div className="explorer-grid" id="shot-visualization">
+                <section className="panel plot-panel">
+                  <SegmentedControl
+                    className="chart-view-tabs"
+                    fullWidth
+                    size="md"
+                    aria-label="Chart view"
+                    value={prefs.view}
                     onChange={(v) =>
-                      v && updatePrefs({ colorBy: v as Dimension })
+                      updatePrefs({ view: v as Preferences["view"] })
                     }
+                    data={[
+                      { label: "Stats chart", value: "dispersion" },
+                      { label: "Overhead", value: "overhead" },
+                      { label: "Distances", value: "distance" },
+                      { label: "Trends", value: "trends" },
+                      { label: "Rankings", value: "rankings" },
+                    ]}
                   />
-                  {(prefs.view === "dispersion" ||
-                    prefs.view === "overhead") && (
-                    <>
-                      <Checkbox
-                        className="control-checkbox"
-                        radius="xs"
-                        size="xs"
-                        label="Combine selection"
-                        checked={prefs.dispersionMode === "combined"}
-                        onChange={(e) =>
-                          updatePrefs({
-                            dispersionMode: e.currentTarget.checked
-                              ? "combined"
-                              : "separate",
-                          })
-                        }
-                      />
-                      <Select
-                        label="Observed ellipse"
-                        size="xs"
-                        value={prefs.coverage}
-                        onChange={(v) => v && updatePrefs({ coverage: v })}
-                        data={[
-                          { value: "0.8", label: "80% of shots" },
-                          { value: "0.5", label: "50% of shots" },
-                          { value: "0", label: "Off" },
-                        ]}
-                      />
-                    </>
-                  )}
-                  <div className="control-field">
-                    <span className="control-label">Units</span>
-                    <SegmentedControl
+                  <div
+                    className="selection-shortcuts"
+                    aria-label="Current shot selection"
+                  >
+                    <Button
+                      className="selection-shortcut"
                       size="xs"
-                      aria-label="Distance units"
-                      value={prefs.unit}
-                      onChange={(v) => updatePrefs({ unit: v as Unit })}
-                      data={["yd", "m"]}
-                    />
+                      variant="default"
+                      aria-label="Change shot filters"
+                      aria-expanded={selectionPanels.includes("filters")}
+                      aria-controls="shot-filters"
+                      title={filterExpression(filters)}
+                      onClick={() => revealSelection("filters")}
+                    >
+                      <span className="shortcut-label">Filters</span>
+                      <span className="shortcut-value">{filterSummary}</span>
+                      <span aria-hidden="true">↓</span>
+                    </Button>
+                    <Button
+                      className="selection-shortcut"
+                      size="xs"
+                      variant="default"
+                      aria-label="Change selected dates"
+                      aria-expanded={selectionPanels.includes("dates")}
+                      aria-controls="shot-dates"
+                      title={dateSummary}
+                      onClick={() => revealSelection("dates")}
+                    >
+                      <span className="shortcut-label">Dates</span>
+                      <span className="shortcut-value">{dateSummary}</span>
+                      <span aria-hidden="true">↓</span>
+                    </Button>
                   </div>
-                </div>
-                {prefs.view !== "trends" && <Playback controller={playback} />}
-                {prefs.view === "rankings" ? (
-                  <Rankings
-                    shots={matched}
-                    all={all}
-                    unit={prefs.unit}
-                    lateral={prefs.metric}
-                    onLateralChange={(metric) => updatePrefs({ metric })}
-                    colorBy={prefs.colorBy}
-                  />
-                ) : prefs.view === "trends" ? (
-                  <Trends
-                    shots={filtered}
-                    playbackDate={playbackDate}
-                    onPlaybackDatesChange={updateTrendDates}
-                    playbackControl={<Playback controller={playback} />}
-                    combine={prefs.trendCombine}
-                    onCombineChange={(trendCombine) =>
-                      updatePrefs({ trendCombine })
-                    }
-                    separateGroups={prefs.separateTrendGroups}
-                    onSeparateGroupsChange={(separateTrendGroups) =>
-                      updatePrefs({ separateTrendGroups })
-                    }
-                    all={all}
-                    unit={prefs.unit}
-                    lateral={prefs.metric}
-                    onLateralChange={(metric) => updatePrefs({ metric })}
-                    colorBy={prefs.colorBy}
-                    onSelect={setSelected}
-                  />
-                ) : (
-                  <>
-                    <div className="availability">
-                      <strong>{plotted.length} shots shown</strong>
-                      {usable.length > measured.length && (
-                        <span>
-                          {usable.length - measured.length} without{" "}
-                          {prefs.metric} distance
-                        </span>
-                      )}
-                      {prefs.view !== "distance" &&
-                        measured.length > paired.length && (
-                          <span>
-                            {measured.length - paired.length} without{" "}
-                            {prefs.metric === "carry" ? "landing" : "finishing"}{" "}
-                            left/right data
-                          </span>
-                        )}
-                      {matched.length > usable.length && (
-                        <span>
-                          {matched.length - usable.length} flagged, omitted from
-                          statistics
-                        </span>
-                      )}
-                      {prefs.view === "overhead" && (
-                        <span
-                          className="geometry-note"
-                          title="Overhead position unavailable or sideways offset larger than distance."
-                          style={{
-                            visibility:
-                              paired.length > plotted.length
-                                ? "visible"
-                                : "hidden",
-                          }}
-                        >
-                          {paired.length - plotted.length} without overhead
-                          position
-                        </span>
-                      )}
-                    </div>
-                    <p className="muted small">
-                      {prefs.view === "overhead"
-                        ? "Flat-ground positions. Rings show distance from you. Dotted edges show a 40 yd fairway reference (20 yd each side)."
-                        : prefs.view === "dispersion"
-                          ? "Reported distance vs. sideways miss. This is a statistics chart, not a map."
-                          : "Reported distances grouped by physical club."}
-                    </p>
-                    {plotted.length ? (
-                      <ShotChart
-                        shots={matched}
-                        all={all}
-                        metric={prefs.metric}
-                        unit={prefs.unit}
-                        colorBy={prefs.colorBy}
-                        coverage={Number(prefs.coverage)}
-                        dispersionMode={prefs.dispersionMode}
-                        view={prefs.view}
-                        selected={selected}
-                        onSelect={setSelected}
-                      />
-                    ) : (
-                      <div className="chart-empty">
-                        <h3>
-                          {matched.length
-                            ? "No positions available for this selection."
-                            : "No shots match this view."}
-                        </h3>
-                        <p>
-                          {matched.length
-                            ? "Switch to Distances to see shots without left/right data."
-                            : "Change a tag or clear the date selection."}
-                        </p>
-                        {matched.length > 0 && (
-                          <Button
-                            variant="light"
-                            onClick={() => updatePrefs({ view: "distance" })}
-                          >
-                            Show distances
-                          </Button>
-                        )}
+                  <div className="plot-controls chart-options">
+                    {prefs.view !== "trends" && prefs.view !== "rankings" && (
+                      <div className="control-field">
+                        <span className="control-label">Distance</span>
+                        <SegmentedControl
+                          size="xs"
+                          aria-label="Distance metric"
+                          value={prefs.metric}
+                          onChange={(v) => updatePrefs({ metric: v as Metric })}
+                          data={[
+                            { label: "Carry", value: "carry" },
+                            { label: "Total", value: "total" },
+                          ]}
+                        />
                       </div>
                     )}
-                    <div className="legend" aria-label="Shot colors">
-                      {[
-                        ...new Set(
-                          plotted
-                            .slice()
-                            .sort(compareClubs)
-                            .map((s) => s[prefs.colorBy]),
-                        ),
-                      ].map((v) => (
-                        <span key={v}>
-                          <i
-                            style={{
-                              background: color(
-                                v,
-                                all.map((row) => row[prefs.colorBy]),
-                              ),
-                            }}
-                          />
-                          {prefs.colorBy === "club_id"
-                            ? `${all.find((s) => s.club_id === v)!.club_label} · ${all.find((s) => s.club_id === v)!.set_id}`
-                            : v}
-                        </span>
-                      ))}
+                    <Select
+                      label="Color by"
+                      size="xs"
+                      value={prefs.colorBy}
+                      data={dimensions.map((d) => ({
+                        value: d.field,
+                        label: d.label,
+                      }))}
+                      onChange={(v) =>
+                        v && updatePrefs({ colorBy: v as Dimension })
+                      }
+                    />
+                    {(prefs.view === "dispersion" ||
+                      prefs.view === "overhead") && (
+                      <>
+                        <Checkbox
+                          className="control-checkbox"
+                          radius="xs"
+                          size="xs"
+                          label="Combine selection"
+                          checked={prefs.dispersionMode === "combined"}
+                          onChange={(e) =>
+                            updatePrefs({
+                              dispersionMode: e.currentTarget.checked
+                                ? "combined"
+                                : "separate",
+                            })
+                          }
+                        />
+                        <Select
+                          label="Observed ellipse"
+                          size="xs"
+                          value={prefs.coverage}
+                          onChange={(v) => v && updatePrefs({ coverage: v })}
+                          data={[
+                            { value: "0.8", label: "80% of shots" },
+                            { value: "0.5", label: "50% of shots" },
+                            { value: "0", label: "Off" },
+                          ]}
+                        />
+                      </>
+                    )}
+                    <div className="control-field">
+                      <span className="control-label">Units</span>
+                      <SegmentedControl
+                        size="xs"
+                        aria-label="Distance units"
+                        value={prefs.unit}
+                        onChange={(v) => updatePrefs({ unit: v as Unit })}
+                        data={["yd", "m"]}
+                      />
                     </div>
-                    <p className="chart-note">
-                      Observed shots, not a prediction.{" "}
-                      <button
-                        className="text-button"
-                        onClick={() => setDetails(true)}
-                      >
-                        About this chart
-                      </button>
-                    </p>
-                  </>
-                )}
-              </section>
-              <aside className="panel inspector">
-                <div className="section-top inspector-heading">
-                  <h2>Shot details</h2>
-                  <Button
-                    variant="default"
-                    size="xs"
-                    disabled={!chosen}
-                    onClick={() => setSelected("")}
-                    aria-label="Clear inspected shot"
-                  >
-                    Clear
-                  </Button>
-                </div>
-                <Select
-                  label="Inspect a shot"
-                  searchable
-                  placeholder="Choose a shot"
-                  value={chosen ? selected : null}
-                  data={matched.map((s) => ({
-                    value: shotKey(s),
-                    label: `${s.club_label} · ${s.set_id} · ${s.shot_id}`,
-                  }))}
-                  onChange={(v) => setSelected(v ?? "")}
-                />
-                {chosen ? (
-                  <ShotDetails shot={chosen} unit={prefs.unit} />
-                ) : (
-                  <p className="inspector-empty muted small">
-                    Tap a dot or choose a shot to see details.
-                  </p>
-                )}
-              </aside>
-            </div>
-            <Accordion
-              className="selection-panels"
-              multiple
-              variant="separated"
-              value={selectionPanels}
-              onChange={setSelectionPanels}
-              transitionDuration={0}
-            >
-              <Accordion.Item value="filters" id="shot-filters">
-                <Accordion.Control>
-                  <span className="selection-panel-heading">
-                    <span className="selection-panel-title">Filters</span>
-                    <span
-                      className="selection-panel-summary"
-                      title={filterExpression(filters)}
+                  </div>
+                  {prefs.view !== "trends" && (
+                    <Playback controller={playback} />
+                  )}
+                  {prefs.view === "rankings" ? (
+                    <Rankings
+                      shots={matched}
+                      all={all}
+                      unit={prefs.unit}
+                      lateral={prefs.metric}
+                      onLateralChange={(metric) => updatePrefs({ metric })}
+                      colorBy={prefs.colorBy}
+                    />
+                  ) : prefs.view === "trends" ? (
+                    <Trends
+                      shots={filtered}
+                      playbackDate={playbackDate}
+                      onPlaybackDatesChange={updateTrendDates}
+                      playbackControl={<Playback controller={playback} />}
+                      combine={prefs.trendCombine}
+                      onCombineChange={(trendCombine) =>
+                        updatePrefs({ trendCombine })
+                      }
+                      separateGroups={prefs.separateTrendGroups}
+                      onSeparateGroupsChange={(separateTrendGroups) =>
+                        updatePrefs({ separateTrendGroups })
+                      }
+                      all={all}
+                      unit={prefs.unit}
+                      lateral={prefs.metric}
+                      onLateralChange={(metric) => updatePrefs({ metric })}
+                      colorBy={prefs.colorBy}
+                      onSelect={setSelected}
+                    />
+                  ) : (
+                    <>
+                      <div className="availability">
+                        <strong>{plotted.length} shots shown</strong>
+                        {usable.length > measured.length && (
+                          <span>
+                            {usable.length - measured.length} without{" "}
+                            {prefs.metric} distance
+                          </span>
+                        )}
+                        {prefs.view !== "distance" &&
+                          measured.length > paired.length && (
+                            <span>
+                              {measured.length - paired.length} without{" "}
+                              {prefs.metric === "carry"
+                                ? "landing"
+                                : "finishing"}{" "}
+                              left/right data
+                            </span>
+                          )}
+                        {matched.length > usable.length && (
+                          <span>
+                            {matched.length - usable.length} flagged, omitted
+                            from statistics
+                          </span>
+                        )}
+                        {prefs.view === "overhead" && (
+                          <span
+                            className="geometry-note"
+                            title="Overhead position unavailable or sideways offset larger than distance."
+                            style={{
+                              visibility:
+                                paired.length > plotted.length
+                                  ? "visible"
+                                  : "hidden",
+                            }}
+                          >
+                            {paired.length - plotted.length} without overhead
+                            position
+                          </span>
+                        )}
+                      </div>
+                      <p className="muted small">
+                        {prefs.view === "overhead"
+                          ? "Flat-ground positions. Rings show distance from you. Dotted edges show a 40 yd fairway reference (20 yd each side)."
+                          : prefs.view === "dispersion"
+                            ? "Reported distance vs. sideways miss. This is a statistics chart, not a map."
+                            : "Reported distances grouped by physical club."}
+                      </p>
+                      {plotted.length ? (
+                        <ShotChart
+                          shots={matched}
+                          all={all}
+                          metric={prefs.metric}
+                          unit={prefs.unit}
+                          colorBy={prefs.colorBy}
+                          coverage={Number(prefs.coverage)}
+                          dispersionMode={prefs.dispersionMode}
+                          view={prefs.view}
+                          selected={selected}
+                          onSelect={setSelected}
+                        />
+                      ) : (
+                        <div className="chart-empty">
+                          <h3>
+                            {matched.length
+                              ? "No positions available for this selection."
+                              : "No shots match this view."}
+                          </h3>
+                          <p>
+                            {matched.length
+                              ? "Switch to Distances to see shots without left/right data."
+                              : "Change a tag or clear the date selection."}
+                          </p>
+                          {matched.length > 0 && (
+                            <Button
+                              variant="light"
+                              onClick={() => updatePrefs({ view: "distance" })}
+                            >
+                              Show distances
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      <div className="legend" aria-label="Shot colors">
+                        {[
+                          ...new Set(
+                            plotted
+                              .slice()
+                              .sort(compareClubs)
+                              .map((s) => s[prefs.colorBy]),
+                          ),
+                        ].map((v) => (
+                          <span key={v}>
+                            <i
+                              style={{
+                                background: color(
+                                  v,
+                                  all.map((row) => row[prefs.colorBy]),
+                                ),
+                              }}
+                            />
+                            {prefs.colorBy === "club_id"
+                              ? `${all.find((s) => s.club_id === v)!.club_label} · ${all.find((s) => s.club_id === v)!.set_id}`
+                              : v}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="chart-note">
+                        Observed shots, not a prediction.{" "}
+                        <button
+                          className="text-button"
+                          onClick={() => setDetails(true)}
+                        >
+                          About this chart
+                        </button>
+                      </p>
+                    </>
+                  )}
+                </section>
+                <aside className="panel inspector">
+                  <div className="section-top inspector-heading">
+                    <h2>Shot details</h2>
+                    <Button
+                      variant="default"
+                      size="xs"
+                      disabled={!chosen}
+                      onClick={() => setSelected("")}
+                      aria-label="Clear inspected shot"
                     >
-                      {filterSummary}
-                    </span>
-                    <span className="selection-panel-count">
-                      {filtered.length} matched
-                    </span>
-                  </span>
-                </Accordion.Control>
-                <Accordion.Panel>
-                  {import.meta.env.MODE === "showcase" && (
-                    <p className="showcase-note">
-                      <strong>Synthetic showcase</strong> · Generated from my
-                      private performance summaries. Shots and dates are
-                      invented.
+                      Clear
+                    </Button>
+                  </div>
+                  <Select
+                    label="Inspect a shot"
+                    searchable
+                    placeholder="Choose a shot"
+                    value={chosen ? selected : null}
+                    data={matched.map((s) => ({
+                      value: shotKey(s),
+                      label: `${s.club_label} · ${s.set_id} · ${s.shot_id}`,
+                    }))}
+                    onChange={(v) => setSelected(v ?? "")}
+                  />
+                  {chosen ? (
+                    <ShotDetails shot={chosen} unit={prefs.unit} />
+                  ) : (
+                    <p className="inspector-empty muted small">
+                      Tap a dot or choose a shot to see details.
                     </p>
                   )}
-                  <div className="filters">
-                    <div className="section-top selection-actions">
-                      <Button variant="default" size="xs" onClick={backToChart}>
-                        Back to chart ↑
-                      </Button>
-                      <Group gap="sm">
+                </aside>
+              </div>
+              <Accordion
+                className="selection-panels"
+                multiple
+                variant="separated"
+                value={selectionPanels}
+                onChange={setSelectionPanels}
+                transitionDuration={0}
+              >
+                <Accordion.Item value="filters" id="shot-filters">
+                  <Accordion.Control>
+                    <span className="selection-panel-heading">
+                      <span className="selection-panel-title">Filters</span>
+                      <span
+                        className="selection-panel-summary"
+                        title={filterExpression(filters)}
+                      >
+                        {filterSummary}
+                      </span>
+                      <span className="selection-panel-count">
+                        {filtered.length} matched
+                      </span>
+                    </span>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    {import.meta.env.MODE === "showcase" && (
+                      <p className="showcase-note">
+                        <strong>Synthetic showcase</strong> · Generated from my
+                        private performance summaries. Shots and dates are
+                        invented.
+                      </p>
+                    )}
+                    <div className="filters">
+                      <div className="section-top selection-actions">
                         <Button
                           variant="default"
                           size="xs"
-                          onClick={() => setFilters({ ...filters, tags: [] })}
+                          onClick={backToChart}
                         >
-                          Clear tags
+                          Back to chart ↑
                         </Button>
-                        <Button variant="default" size="xs" onClick={saveView}>
-                          Save filters
-                        </Button>
-                        <Button
-                          variant="light"
+                        <Group gap="sm">
+                          <Button
+                            variant="default"
+                            size="xs"
+                            onClick={() => setFilters({ ...filters, tags: [] })}
+                          >
+                            Clear tags
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="xs"
+                            onClick={saveView}
+                          >
+                            Save filters
+                          </Button>
+                          <Button
+                            variant="light"
+                            size="xs"
+                            disabled={!savedView}
+                            onClick={() => savedView && setFilters(savedView)}
+                          >
+                            Restore filters
+                          </Button>
+                        </Group>
+                      </div>
+                      <div className="tag-groups">
+                        {dimensions.map(({ field, label }) => (
+                          <fieldset className="tag-group" key={field}>
+                            <legend>{label}</legend>
+                            <div className="tag-options">
+                              {[...new Set(all.map((s) => s[field]))]
+                                .sort((a, b) =>
+                                  field === "club_label"
+                                    ? clubOrder(a) - clubOrder(b) ||
+                                      a.localeCompare(b)
+                                    : field === "club_id"
+                                      ? compareClubs(
+                                          all.find((s) => s.club_id === a)!,
+                                          all.find((s) => s.club_id === b)!,
+                                        )
+                                      : a.localeCompare(b),
+                                )
+                                .map((value) => {
+                                  const active = filters.tags.some(
+                                    (t) =>
+                                      t.field === field && t.value === value,
+                                  );
+                                  const label =
+                                    field === "club_id"
+                                      ? `${all.find((s) => s.club_id === value)!.club_label} · ${all.find((s) => s.club_id === value)!.set_id}`
+                                      : value;
+                                  return (
+                                    <Button
+                                      key={value}
+                                      size="compact-sm"
+                                      variant={active ? "light" : "outline"}
+                                      color="teal"
+                                      aria-pressed={active}
+                                      onClick={() =>
+                                        setFilters({
+                                          ...filters,
+                                          tags: active
+                                            ? filters.tags.filter(
+                                                (t) =>
+                                                  !(
+                                                    t.field === field &&
+                                                    t.value === value
+                                                  ),
+                                              )
+                                            : [
+                                                ...filters.tags,
+                                                { field, value },
+                                              ],
+                                        })
+                                      }
+                                    >
+                                      {label}
+                                    </Button>
+                                  );
+                                })}
+                            </div>
+                          </fieldset>
+                        ))}
+                      </div>
+                      <div className="filter-bottom">
+                        <SegmentedControl
                           size="xs"
-                          disabled={!savedView}
-                          onClick={() => savedView && setFilters(savedView)}
-                        >
-                          Restore filters
-                        </Button>
-                      </Group>
-                    </div>
-                    <div className="tag-groups">
-                      {dimensions.map(({ field, label }) => (
-                        <fieldset className="tag-group" key={field}>
-                          <legend>{label}</legend>
-                          <div className="tag-options">
-                            {[...new Set(all.map((s) => s[field]))]
-                              .sort((a, b) =>
-                                field === "club_label"
-                                  ? clubOrder(a) - clubOrder(b) ||
-                                    a.localeCompare(b)
-                                  : field === "club_id"
-                                    ? compareClubs(
-                                        all.find((s) => s.club_id === a)!,
-                                        all.find((s) => s.club_id === b)!,
-                                      )
-                                    : a.localeCompare(b),
-                              )
-                              .map((value) => {
-                                const active = filters.tags.some(
-                                  (t) => t.field === field && t.value === value,
-                                );
-                                const label =
-                                  field === "club_id"
-                                    ? `${all.find((s) => s.club_id === value)!.club_label} · ${all.find((s) => s.club_id === value)!.set_id}`
-                                    : value;
-                                return (
-                                  <Button
-                                    key={value}
-                                    size="compact-sm"
-                                    variant={active ? "light" : "outline"}
-                                    color="teal"
-                                    aria-pressed={active}
-                                    onClick={() =>
-                                      setFilters({
-                                        ...filters,
-                                        tags: active
-                                          ? filters.tags.filter(
-                                              (t) =>
-                                                !(
-                                                  t.field === field &&
-                                                  t.value === value
-                                                ),
-                                            )
-                                          : [...filters.tags, { field, value }],
-                                      })
-                                    }
-                                  >
-                                    {label}
-                                  </Button>
-                                );
-                              })}
-                          </div>
-                        </fieldset>
-                      ))}
-                    </div>
-                    <div className="filter-bottom">
-                      <SegmentedControl
-                        size="xs"
-                        aria-label="Tag matching mode"
-                        value={filters.mode}
-                        onChange={(v) =>
-                          setFilters({ ...filters, mode: v as Filters["mode"] })
-                        }
-                        data={[
-                          { label: "Grouped", value: "grouped" },
-                          { label: "All · AND", value: "all" },
-                          { label: "Any · OR", value: "any" },
-                        ]}
-                      />
-                      <span className="expression">
-                        {filterExpression(filters)}
-                      </span>
-                      <strong>{filtered.length} matched</strong>
-                    </div>
-                    <p className="muted small">
-                      Grouped: OR within each field, AND between fields. Dates
-                      always narrow the result.
-                    </p>
-                  </div>
-                </Accordion.Panel>
-              </Accordion.Item>
-              <Accordion.Item value="dates" id="shot-dates">
-                <Accordion.Control>
-                  <span className="selection-panel-heading">
-                    <span className="selection-panel-title">Dates</span>
-                    <span
-                      className="selection-panel-summary"
-                      title={dateSummary}
-                    >
-                      {dateSummary}
-                    </span>
-                  </span>
-                </Accordion.Control>
-                <Accordion.Panel>
-                  {import.meta.env.MODE === "showcase" && (
-                    <p className="showcase-note">
-                      <strong>Synthetic showcase</strong> · Generated from my
-                      private performance summaries. Shots and dates are
-                      invented.
-                    </p>
-                  )}
-                  <Timeline
-                    shots={all}
-                    filters={filters}
-                    onChange={setFilters}
-                    embedded
-                    onBackToChart={backToChart}
-                  />
-                </Accordion.Panel>
-              </Accordion.Item>
-            </Accordion>
-            <section className="panel">
-              <div className="section-top">
-                <div>
-                  <h2>Club summaries</h2>
-                </div>
-                <Button
-                  variant="default"
-                  size="xs"
-                  onClick={() => setDetails(true)}
-                >
-                  How to read this
-                </Button>
-              </div>
-              <p className="muted small">
-                Unweighted usable shots · {prefs.metric} in {prefs.unit} ·
-                separate clubs and settings
-              </p>
-              <div className="summary-grid">
-                {grouped.map(([key, rows], i) => {
-                  const values = rows
-                      .map((s) => distance(s, prefs.metric, prefs.unit))
-                      .filter((n): n is number => n !== null),
-                    sides = rows
-                      .map((s) =>
-                        distance(s, prefs.metric, prefs.unit) !== null
-                          ? side(s, prefs.metric, prefs.unit)
-                          : null,
-                      )
-                      .filter((n): n is number => n !== null);
-                  const contour = ellipse(
-                    rows
-                      .filter(
-                        (s) =>
-                          distance(s, prefs.metric, prefs.unit) !== null &&
-                          side(s, prefs.metric, prefs.unit) !== null,
-                      )
-                      .map((s) => [
-                        side(s, prefs.metric, prefs.unit)!,
-                        distance(s, prefs.metric, prefs.unit)!,
-                      ]),
-                    Number(prefs.coverage) || 0.8,
-                  );
-                  const s = rows[0];
-                  return (
-                    <article
-                      className="club-card"
-                      key={key}
-                      style={{
-                        borderTopColor: color(
-                          s[prefs.colorBy],
-                          all.map((row) => row[prefs.colorBy]),
-                        ),
-                      }}
-                    >
-                      <div className="club-card-heading">
-                        <h3>{s.club_label}</h3>
-                        <Badge variant="light" color={setColor(s.set_id)}>
-                          {s.set_id}
-                        </Badge>
+                          aria-label="Tag matching mode"
+                          value={filters.mode}
+                          onChange={(v) =>
+                            setFilters({
+                              ...filters,
+                              mode: v as Filters["mode"],
+                            })
+                          }
+                          data={[
+                            { label: "Grouped", value: "grouped" },
+                            { label: "All · AND", value: "all" },
+                            { label: "Any · OR", value: "any" },
+                          ]}
+                        />
+                        <span className="expression">
+                          {filterExpression(filters)}
+                        </span>
+                        <strong>{filtered.length} matched</strong>
                       </div>
                       <p className="muted small">
-                        {s.source} · {values.length} measured / {rows.length}{" "}
-                        shots · {new Set(rows.map(sessionKey)).size}{" "}
-                        {new Set(rows.map(sessionKey)).size === 1
-                          ? "session"
-                          : "sessions"}
+                        Grouped: OR within each field, AND between fields. Dates
+                        always narrow the result.
                       </p>
-                      <div className="median">
-                        {format(quantile(values, 0.5))}
-                        <small>{prefs.unit} median</small>
-                      </div>
-                      <dl>
-                        <div>
-                          <dt>Middle 80%</dt>
-                          <dd>
-                            {format(quantile(values, 0.1))} –{" "}
-                            {format(quantile(values, 0.9))}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Mean</dt>
-                          <dd>
-                            {format(
-                              values.length
-                                ? values.reduce((a, b) => a + b, 0) /
-                                    values.length
-                                : null,
-                            )}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Min / max</dt>
-                          <dd>
-                            {values.length
-                              ? `${format(Math.min(...values))} / ${format(Math.max(...values))}`
-                              : "—"}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Median side</dt>
-                          <dd>
-                            {format(quantile(sides, 0.5))}{" "}
-                            <small>({sides.length} paired)</small>
-                          </dd>
-                        </div>
-                      </dl>
-                      <details>
-                        <summary>Measurement context · group {i + 1}</summary>
-                        {Number(prefs.coverage) > 0 && (
-                          <p>
-                            {contour
-                              ? `Observed ellipse: ${contour.enclosed} of ${contour.n} paired shots enclosed.`
-                              : "Observed ellipse unavailable: fewer than 10 pairs or singular covariance."}
-                          </p>
-                        )}
-                        <Context shot={s} />
-                      </details>
-                    </article>
-                  );
-                })}
-              </div>
-              {!grouped.length && (
-                <p className="muted">No usable shots in this selection.</p>
-              )}
-            </section>
-            <section className="panel">
-              <div className="section-top">
-                <div>
-                  <h2>
-                    Shot table <span className="count">{matched.length}</span>
-                  </h2>
-                </div>
-                <Group gap="sm">
-                  <Button
-                    size="xs"
-                    variant="default"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <span className="small pagination-status">
-                    {page + 1} / {Math.max(1, Math.ceil(matched.length / 20))}
-                  </span>
-                  <Button
-                    size="xs"
-                    variant="default"
-                    disabled={(page + 1) * 20 >= matched.length}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </Group>
-              </div>
-              <Table.ScrollContainer minWidth={680}>
-                <Table highlightOnHover>
-                  <Table.Thead>
-                    <Table.Tr>
-                      {[
-                        "Shot",
-                        "Club / set",
-                        "Source",
-                        "Session date",
-                        `Carry (${prefs.unit})`,
-                        `Total (${prefs.unit})`,
-                        `Left/right (${prefs.unit})`,
-                        `Quality`,
-                      ].map((h) => (
-                        <Table.Th key={h}>{h}</Table.Th>
-                      ))}
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {matched.slice(page * 20, page * 20 + 20).map((s) => (
-                      <Table.Tr
-                        key={shotKey(s)}
-                        data-selected={selected === shotKey(s)}
+                    </div>
+                  </Accordion.Panel>
+                </Accordion.Item>
+                <Accordion.Item value="dates" id="shot-dates">
+                  <Accordion.Control>
+                    <span className="selection-panel-heading">
+                      <span className="selection-panel-title">Dates</span>
+                      <span
+                        className="selection-panel-summary"
+                        title={dateSummary}
                       >
-                        <Table.Td>
-                          <button
-                            className="shot-link"
-                            onClick={() => setSelected(shotKey(s))}
-                          >
-                            {s.shot_id}
-                          </button>
-                        </Table.Td>
-                        <Table.Td>
-                          {s.club_label}
-                          <small className="block muted">{s.set_id}</small>
-                        </Table.Td>
-                        <Table.Td>{s.source}</Table.Td>
-                        <Table.Td>{s.session_date ?? "Unknown"}</Table.Td>
-                        <Table.Td>
-                          {format(distance(s, "carry", prefs.unit))}
-                        </Table.Td>
-                        <Table.Td>
-                          {format(distance(s, "total", prefs.unit))}
-                        </Table.Td>
-                        <Table.Td>
-                          {format(side(s, prefs.metric, prefs.unit))}
-                        </Table.Td>
-                        <Table.Td>{s.quality}</Table.Td>
+                        {dateSummary}
+                      </span>
+                    </span>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    {import.meta.env.MODE === "showcase" && (
+                      <p className="showcase-note">
+                        <strong>Synthetic showcase</strong> · Generated from my
+                        private performance summaries. Shots and dates are
+                        invented.
+                      </p>
+                    )}
+                    <Timeline
+                      shots={all}
+                      filters={filters}
+                      onChange={setFilters}
+                      embedded
+                      onBackToChart={backToChart}
+                    />
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
+              <section className="panel">
+                <div className="section-top">
+                  <div>
+                    <h2>Club summaries</h2>
+                  </div>
+                  <Button
+                    variant="default"
+                    size="xs"
+                    onClick={() => setDetails(true)}
+                  >
+                    How to read this
+                  </Button>
+                </div>
+                <p className="muted small">
+                  Unweighted usable shots · {prefs.metric} in {prefs.unit} ·
+                  separate clubs and settings
+                </p>
+                <div className="summary-grid">
+                  {grouped.map(([key, rows], i) => {
+                    const values = rows
+                        .map((s) => distance(s, prefs.metric, prefs.unit))
+                        .filter((n): n is number => n !== null),
+                      sides = rows
+                        .map((s) =>
+                          distance(s, prefs.metric, prefs.unit) !== null
+                            ? side(s, prefs.metric, prefs.unit)
+                            : null,
+                        )
+                        .filter((n): n is number => n !== null);
+                    const contour = ellipse(
+                      rows
+                        .filter(
+                          (s) =>
+                            distance(s, prefs.metric, prefs.unit) !== null &&
+                            side(s, prefs.metric, prefs.unit) !== null,
+                        )
+                        .map((s) => [
+                          side(s, prefs.metric, prefs.unit)!,
+                          distance(s, prefs.metric, prefs.unit)!,
+                        ]),
+                      Number(prefs.coverage) || 0.8,
+                    );
+                    const s = rows[0];
+                    return (
+                      <article
+                        className="club-card"
+                        key={key}
+                        style={{
+                          borderTopColor: color(
+                            s[prefs.colorBy],
+                            all.map((row) => row[prefs.colorBy]),
+                          ),
+                        }}
+                      >
+                        <div className="club-card-heading">
+                          <h3>{s.club_label}</h3>
+                          <Badge variant="light" color={setColor(s.set_id)}>
+                            {s.set_id}
+                          </Badge>
+                        </div>
+                        <p className="muted small">
+                          {s.source} · {values.length} measured / {rows.length}{" "}
+                          shots · {new Set(rows.map(sessionKey)).size}{" "}
+                          {new Set(rows.map(sessionKey)).size === 1
+                            ? "session"
+                            : "sessions"}
+                        </p>
+                        <div className="median">
+                          {format(quantile(values, 0.5))}
+                          <small>{prefs.unit} median</small>
+                        </div>
+                        <dl>
+                          <div>
+                            <dt>Middle 80%</dt>
+                            <dd>
+                              {format(quantile(values, 0.1))} –{" "}
+                              {format(quantile(values, 0.9))}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Mean</dt>
+                            <dd>
+                              {format(
+                                values.length
+                                  ? values.reduce((a, b) => a + b, 0) /
+                                      values.length
+                                  : null,
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Min / max</dt>
+                            <dd>
+                              {values.length
+                                ? `${format(Math.min(...values))} / ${format(Math.max(...values))}`
+                                : "—"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Median side</dt>
+                            <dd>
+                              {format(quantile(sides, 0.5))}{" "}
+                              <small>({sides.length} paired)</small>
+                            </dd>
+                          </div>
+                        </dl>
+                        <details>
+                          <summary>Measurement context · group {i + 1}</summary>
+                          {Number(prefs.coverage) > 0 && (
+                            <p>
+                              {contour
+                                ? `Observed ellipse: ${contour.enclosed} of ${contour.n} paired shots enclosed.`
+                                : "Observed ellipse unavailable: fewer than 10 pairs or singular covariance."}
+                            </p>
+                          )}
+                          <Context shot={s} />
+                        </details>
+                      </article>
+                    );
+                  })}
+                </div>
+                {!grouped.length && (
+                  <p className="muted">No usable shots in this selection.</p>
+                )}
+              </section>
+              <section className="panel">
+                <div className="section-top">
+                  <div>
+                    <h2>
+                      Shot table <span className="count">{matched.length}</span>
+                    </h2>
+                  </div>
+                  <Group gap="sm">
+                    <Button
+                      size="xs"
+                      variant="default"
+                      disabled={page === 0}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <span className="small pagination-status">
+                      {page + 1} / {Math.max(1, Math.ceil(matched.length / 20))}
+                    </span>
+                    <Button
+                      size="xs"
+                      variant="default"
+                      disabled={(page + 1) * 20 >= matched.length}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                    </Button>
+                  </Group>
+                </div>
+                <Table.ScrollContainer minWidth={680}>
+                  <Table highlightOnHover>
+                    <Table.Thead>
+                      <Table.Tr>
+                        {[
+                          "Shot",
+                          "Club / set",
+                          "Source",
+                          "Session date",
+                          `Carry (${prefs.unit})`,
+                          `Total (${prefs.unit})`,
+                          `Left/right (${prefs.unit})`,
+                          `Quality`,
+                        ].map((h) => (
+                          <Table.Th key={h}>{h}</Table.Th>
+                        ))}
                       </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </Table.ScrollContainer>
-            </section>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {matched.slice(page * 20, page * 20 + 20).map((s) => (
+                        <Table.Tr
+                          key={shotKey(s)}
+                          data-selected={selected === shotKey(s)}
+                        >
+                          <Table.Td>
+                            <button
+                              className="shot-link"
+                              onClick={() => setSelected(shotKey(s))}
+                            >
+                              {s.shot_id}
+                            </button>
+                          </Table.Td>
+                          <Table.Td>
+                            {s.club_label}
+                            <small className="block muted">{s.set_id}</small>
+                          </Table.Td>
+                          <Table.Td>{s.source}</Table.Td>
+                          <Table.Td>{s.session_date ?? "Unknown"}</Table.Td>
+                          <Table.Td>
+                            {format(distance(s, "carry", prefs.unit))}
+                          </Table.Td>
+                          <Table.Td>
+                            {format(distance(s, "total", prefs.unit))}
+                          </Table.Td>
+                          <Table.Td>
+                            {format(side(s, prefs.metric, prefs.unit))}
+                          </Table.Td>
+                          <Table.Td>{s.quality}</Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </Table.ScrollContainer>
+              </section>
+            </div>
           </>
         )}
         <footer>

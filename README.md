@@ -37,8 +37,9 @@ actually helps when I am standing over the next shot.
 
 I can now explore my reviewed shots in a local UI: carry and total, dispersion,
 club filters, and a session timeline. My two club sets stay separate, and missing
-measurements stay visible. Recommendations, model experiments, and offline phone
-use are still ahead.
+measurements stay visible. A first approach picker compares clubs by typical
+carry, with optional rangefinder plays-like yardage. Model experiments, hazard
+risk, and offline phone use are still ahead.
 
 ![My Shots explorer with synthetic seven-iron data](docs/images/synthetic-dispersion.jpg)
 

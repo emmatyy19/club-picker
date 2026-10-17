@@ -34,8 +34,10 @@ Private shot history does not need to be published to make the app useful.
 
 ## From the explorer to a caddie
 
-Once that foundation works, I want to enter a distance and see a club,
-alternatives, and the observed spread behind the suggestion. Three adjacent
+The local [approach picker](journey/004-a-first-approach-picker.md) now accepts
+a target distance and optional rangefinder plays-like yardage and slope angle.
+It compares typical carry and shows alternatives with observed ranges.
+Chronological prediction evaluation remains ahead. Three adjacent
 irons are a useful starting comparison when I have suitable data; they do not
 limit which clubs I can explore now.
 

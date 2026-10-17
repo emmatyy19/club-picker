@@ -1356,3 +1356,214 @@ footer {
   font-size: 14px;
   line-height: 1.6;
 }
+
+.workspace-tabs {
+  margin-bottom: 24px;
+}
+.approach-picker {
+  padding: clamp(20px, 3vw, 36px);
+}
+.approach-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.approach-heading h2 {
+  margin: 0 0 8px;
+}
+.approach-heading p {
+  margin: 0;
+}
+.approach-inputs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.approach-data {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 28px 0;
+}
+.approach-data > .mantine-Select-root {
+  min-width: 240px;
+}
+.approach-context {
+  margin-top: 24px;
+}
+.approach-context summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  border: 1px solid #dfe4dc;
+  border-radius: 10px;
+  width: fit-content;
+}
+.approach-context[open] summary {
+  margin-bottom: 20px;
+}
+.approach-results {
+  margin-top: 28px;
+}
+.approach-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin: 20px 0;
+}
+.approach-card {
+  border: 1px solid #dfe4dc;
+  border-radius: 16px;
+  padding: 24px;
+}
+.approach-best {
+  background: #f1f7f0;
+  border-color: #65947b;
+}
+.approach-card h3 {
+  margin: 12px 0;
+  font-size: 24px;
+}
+.approach-yardage {
+  font-size: 36px;
+}
+.approach-yardage small {
+  font-size: 16px;
+  font-weight: 400;
+}
+.approach-card dl {
+  margin: 24px 0 0;
+}
+.approach-card dl div {
+  margin-top: 14px;
+}
+.approach-card dt {
+  font-size: 12px;
+  color: #69786f;
+}
+.approach-card dd {
+  margin: 4px 0 0;
+}
+@media (max-width: 850px) {
+  .approach-inputs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .approach-cards {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 480px) {
+  .approach-inputs {
+    grid-template-columns: 1fr;
+  }
+}
+
+.approach-data > .mantine-Checkbox-root {
+  padding-bottom: 8px;
+}
+.approach-swing {
+  color: #496a58;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+.approach-context .mantine-Checkbox-root {
+  margin-bottom: 24px;
+}
+.approach-inputs > .control-field {
+  justify-content: flex-end;
+}
+.approach-data {
+  min-height: 64px;
+}
+.approach-set-row {
+  margin-bottom: 24px;
+}
+.approach-toggle-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.approach-field-label {
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  line-height: 1.55;
+}
+.approach-picker .approach-inputs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.approach-window {
+  margin: 24px 0;
+}
+.approach-window-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  max-width: 560px;
+  margin-top: 20px;
+}
+.carry-window-results {
+  margin-top: 24px;
+}
+.carry-window-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #eee;
+}
+.window-short {
+  background: #bf9d61;
+}
+.window-within {
+  background: #52826a;
+}
+.window-long {
+  background: #8a85a6;
+}
+.carry-window-labels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 13px;
+}
+.carry-window-labels span {
+  display: block;
+  margin-top: 4px;
+  color: #69786f;
+}
+@media (max-width: 650px) {
+  .approach-picker .approach-inputs {
+    grid-template-columns: 1fr;
+  }
+}
+.must-carry-input {
+  max-width: 420px;
+  margin-bottom: 24px;
+}
+.approach-distances {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.approach-distances span {
+  display: block;
+  font-size: 13px;
+  color: #69786f;
+  margin-bottom: 8px;
+}
+.approach-distances strong {
+  font-size: 25px;
+}
+.approach-distances small {
+  font-size: 14px;
+  font-weight: 400;
+}
+.clearance-result {
+  font-size: 14px;
+}

@@ -92,3 +92,11 @@ No raw shot rows, actual dates, provider identifiers, report links, or locations
 are included in the dataset or screenshots. Aggregate performance is deliberately
 shared under my [data policy](data-policy.md); this is not a formal anonymization
 or differential-privacy guarantee.
+
+## Approach picker
+
+I can enter target yardage, optionally use my rangefinder's plays-like distance,
+and compare the closest typical carries from one set. These suggestions use the
+same synthetic demonstration data as the explorer, not real course outcomes.
+
+![Approach picker using invented shots and rangefinder inputs](images/synthetic-approach.jpg)
