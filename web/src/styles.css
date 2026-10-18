@@ -53,18 +53,6 @@ summary:focus-visible {
   border-radius: 50%;
   font-size: 24px;
 }
-.brand-divider {
-  height: 24px;
-  width: 1px;
-  background: #d8ded7;
-  margin: 0 8px;
-}
-.brand-section {
-  font-size: 13px;
-  color: #7a867e;
-  font-weight: 450;
-  letter-spacing: 0;
-}
 .local-label {
   font-size: 12px;
   color: #65766b;
@@ -822,10 +810,6 @@ footer {
   .topbar {
     padding: 0 20px;
     height: 64px;
-  }
-  .brand-section,
-  .brand-divider {
-    display: none;
   }
   .shot-chart {
     height: 380px;

@@ -1,4 +1,4 @@
-# Club Picker
+# My Caddie
 
 Building a personalized golf caddie from my own shot data.
 

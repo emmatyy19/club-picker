@@ -1,5 +1,8 @@
 # Development Setup
 
+The app is called **My Caddie**. The repository, Python package, CLI, and snapshot
+format keep their `club-picker` / `club_picker` identifiers for compatibility.
+
 The package provides a local manual CSV importer, private SQLite storage, and
 a shot-data audit. See the [import guide](data-import.md) for a runnable synthetic
 walkthrough. The [local explorer](explorer.md) adds a React/TypeScript UI over
