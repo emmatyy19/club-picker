@@ -4,7 +4,7 @@ I am comfortable sharing my numerical golf performance data. How far I hit a
 7-iron, how widely my shots spread, or whether a model predicts them well can
 be part of the public project story. Where I practice or play stays private.
 
-This distinction applies even while the GitHub repository itself is private.
+This distinction applies whether the GitHub repository is private or public.
 
 ## Public measurements
 

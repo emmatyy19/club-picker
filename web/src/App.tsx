@@ -57,7 +57,13 @@ const dimensions: { field: Dimension; label: string }[] = [
   { field: "club_id", label: "Physical club" },
 ];
 
-const preferencesKey = "club-picker.preferences.v1";
+const showcase = import.meta.env.MODE === "showcase";
+const preferencesKey = showcase
+  ? "club-picker.showcase.preferences.v1"
+  : "club-picker.preferences.v1";
+const savedViewKey = showcase
+  ? "club-picker.showcase.saved-view.v1"
+  : "club-picker.saved-view.v1";
 type Preferences = {
   metric: Metric;
   unit: Unit;
@@ -181,7 +187,7 @@ export function App() {
     if (initialized.current) return;
     initialized.current = true;
     const init = async () => {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || import.meta.env.MODE === "showcase") {
         try {
           const snapshot = await loadRepoLibrary();
           if (snapshot) {
@@ -209,7 +215,7 @@ export function App() {
     };
     void init().finally(() => setReady(true));
     try {
-      const raw = localStorage.getItem("club-picker.saved-view.v1");
+      const raw = localStorage.getItem(savedViewKey);
       if (raw) {
         const f = JSON.parse(raw) as Filters;
         if (
@@ -327,7 +333,7 @@ export function App() {
   const updatePrefs = (p: Partial<Preferences>) =>
     setPrefs((v) => ({ ...v, ...p }));
   const startImport = async (file: File | null) => {
-    if (!file) return;
+    if (!file || showcase) return;
     setError("");
     setNotice("");
     try {
@@ -368,10 +374,7 @@ export function App() {
   };
   const saveView = () => {
     try {
-      localStorage.setItem(
-        "club-picker.saved-view.v1",
-        JSON.stringify(filters),
-      );
+      localStorage.setItem(savedViewKey, JSON.stringify(filters));
       setSavedView(filters);
       setNotice("Saved this filter and date selection.");
     } catch {
@@ -384,7 +387,7 @@ export function App() {
         <div className="brand">
           <img
             className="brand-logo"
-            src="/bunny-caddie.svg"
+            src={`${import.meta.env.BASE_URL}bunny-caddie.svg`}
             alt="Bunny caddie"
           />{" "}
           club picker
@@ -392,7 +395,7 @@ export function App() {
           <span className="brand-section">My shots</span>
         </div>
         <span className="local-label">
-          <i /> Local workspace
+          <i /> {showcase ? "Interactive demo" : "Local workspace"}
         </span>
       </header>
       <main>
@@ -401,7 +404,7 @@ export function App() {
             <h1>{workspace === "shots" ? "My Shots" : "Approach picker"}</h1>
           </div>
           <Group gap="sm">
-            {import.meta.env.DEV && (
+            {import.meta.env.DEV && !showcase && (
               <Button
                 loading={refreshing}
                 disabled={!ready}
@@ -415,7 +418,7 @@ export function App() {
               disabled={refreshing || !ready}
               onClick={() => setSettings(true)}
             >
-              Data settings
+              {showcase ? "About this demo" : "Data settings"}
             </Button>
           </Group>
         </div>
@@ -1218,52 +1221,102 @@ export function App() {
         )}
         <footer>
           <span>Club Picker</span>
-          <span>Local data. No account. No uploads.</span>
+          <span>
+            {showcase
+              ? "Synthetic shots. No account. No uploads."
+              : "Local data. No account. No uploads."}
+          </span>
         </footer>
       </main>
       <Modal
         opened={settings}
         onClose={() => setSettings(false)}
-        title="Data settings"
+        title={showcase ? "About this demo" : "Data settings"}
       >
-        <p>
-          Add source files to <code>data/raw/trackman/</code> or{" "}
-          <code>data/raw/toptracer/</code>, one folder per session. Confirm the
-          club set when the session is processed.
-        </p>
-        <p>
-          The reviewed repo library loads on opening. Refresh data reads it
-          again and keeps your filters. Raw files still need extraction and
-          review.
-        </p>
-        <h3>Browser backup</h3>
-        <p className="muted small">
-          Optional JSON transfer or recovery. Restore replaces the browser copy
-          only. Refreshing or reopening uses the repo library when available.
-          Backups include private session dates, but exclude original files and
-          filters.
-        </p>
-        <Group>
-          <FileButton
-            onChange={(file) => {
-              setSettings(false);
-              void startImport(file);
-            }}
-            accept="application/json,.json"
-          >
-            {(props) => (
-              <Button {...props} variant="default">
-                Restore backup
+        {showcase ? (
+          <>
+            <p>
+              Explore invented shots generated from summary statistics of my own
+              practice data. Dates and sessions are invented too; any trends
+              here are examples, not my actual practice history.
+            </p>
+            <p>
+              Try the filters, play through dates, or enter a distance in the
+              Approach picker. Results describe these example shots, not a
+              validated prediction of your game.
+            </p>
+            <p className="muted small">
+              This demo does not accept personal files. Display preferences and
+              saved filters stay in this browser. Reset clears only those demo
+              settings, leaving any local-app backups untouched.
+            </p>
+            <Group>
+              <Button
+                variant="default"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(preferencesKey);
+                    localStorage.removeItem(savedViewKey);
+                  } catch {
+                    // Reset the current view even if browser storage is blocked.
+                  }
+                  window.location.reload();
+                }}
+              >
+                Reset demo
               </Button>
-            )}
-          </FileButton>
-          <Button
-            disabled={!library}
-            onClick={() => library && download(library)}
-          >
-            Export backup
-          </Button>
-        </Group>
+              <Button
+                component="a"
+                href="https://github.com/emmatyy19/club-picker"
+                target="_blank"
+                rel="noreferrer"
+              >
+                View project
+              </Button>
+            </Group>
+          </>
+        ) : (
+          <>
+            <p>
+              Add source files to <code>data/raw/trackman/</code> or{" "}
+              <code>data/raw/toptracer/</code>, one folder per session. Confirm
+              the club set when the session is processed.
+            </p>
+            <p>
+              The reviewed repo library loads on opening. Refresh data reads it
+              again and keeps your filters. Raw files still need extraction and
+              review.
+            </p>
+            <h3>Browser backup</h3>
+            <p className="muted small">
+              Optional JSON transfer or recovery. Restore replaces the browser
+              copy only. Refreshing or reopening uses the repo library when
+              available. Backups include private session dates, but exclude
+              original files and filters.
+            </p>
+            <Group>
+              <FileButton
+                onChange={(file) => {
+                  setSettings(false);
+                  void startImport(file);
+                }}
+                accept="application/json,.json"
+              >
+                {(props) => (
+                  <Button {...props} variant="default">
+                    Restore backup
+                  </Button>
+                )}
+              </FileButton>
+              <Button
+                disabled={!library}
+                onClick={() => library && download(library)}
+              >
+                Export backup
+              </Button>
+            </Group>
+          </>
+        )}
       </Modal>
       <Modal
         opened={!!pending}

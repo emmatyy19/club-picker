@@ -3,8 +3,9 @@
 The package provides a local manual CSV importer, private SQLite storage, and
 a shot-data audit. See the [import guide](data-import.md) for a runnable synthetic
 walkthrough. The [local explorer](explorer.md) adds a React/TypeScript UI over
-reviewed snapshots. Provider adapters, the recommender, and phone installation
-are pending.
+reviewed snapshots and a descriptive approach picker. Shared Trackman reports
+also have a reusable importer. Toptracer screenshot extraction still needs
+review; provider account sync and phone installation are not implemented.
 
 ## Environment
 
@@ -56,7 +57,10 @@ uv run python -c "import club_picker"
 CI also imports the built wheel in a clean environment. Tests cover invalid
 inputs, unit conversion, missing values, repeated imports, conflicts, transaction
 rollback, original-file integrity, grouping, chronology, and the CLI workflow.
-They verify the data foundation, not recommendation accuracy.
+Frontend tests also check session-balanced summaries, finish ranking, carry
+boundaries, and missing-data behavior. Python reference fixtures check shared
+summary and target calculations. Passing these checks establishes calculation
+behavior, not recommendation accuracy on future shots.
 
 ## Data and contributions
 

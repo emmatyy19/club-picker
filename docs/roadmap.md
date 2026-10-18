@@ -1,72 +1,67 @@
 # Direction and Milestones
 
-I want to grow this from a small distance helper into a caddie that understands
-my consistency and recent form. This page records the broad direction and
-milestones. The [project journey](README.md) will explain what I learn along
-the way.
+I want a caddie that understands my consistency and recent form, and a project
+that gives me a reason to learn model training. The working app starts with
+transparent statistics. More complicated models need to earn their place.
 
-## Current position
+## Working now
 
-The local manual importer, private storage, and data audit are implemented.
-I have reviewed my first Trackman and Toptracer exports and explored an
-interactive prototype using those shots. The first local explorer now works,
-including browser persistence, private snapshot backup/restore, and descriptive
-session trends for distance, speed, sideways consistency, and available flight
-measurements. The overhead view includes a 40-yard fairway reference. No models or
-recommendations have been evaluated yet. The
-[import guide](data-import.md) describes the working data path.
+| Area | Current behavior |
+| --- | --- |
+| Data foundation | Validated manual CSV imports, private SQLite storage, duplicate checks, and a data audit |
+| Trackman | Reusable shared-report importer with review and repeat-import handling; no account sync |
+| Toptracer | Reviewed screenshot extraction into numeric records; no general automated screenshot importer |
+| My Shots | Carry/total charts, overhead view, dispersion, tag filters, date ranges and playback, trends, rankings, and shot inspection |
+| Club identity | Two physical sets remain distinct, with explicit options to combine selected data for exploration |
+| Approach picker | Finish target against reported total, optional must-carry and landing window, full/recorded partial swings, observed ranges and support |
+| Showcase | Invented shots generated from published performance aggregates, local demo mode, and screenshots |
 
-## See my shots together first
+The [import guide](data-import.md), [explorer guide](explorer.md), and
+[approach milestone](journey/004-a-first-approach-picker.md) describe these paths.
+The app runs locally. A laptop development server is not an installed offline
+phone app. No recommendation has been validated as a future-shot prediction,
+and no trained model or scoring improvement has been demonstrated.
 
-The first local shot explorer lets me see my practice data in
-one place, switch between carry and total, combine tags, and move through
-sessions on a timeline. Distances, dispersion, and individual shots should be
-easy to inspect, with my two physical club sets kept distinct.
+## Next: make it useful and test it
 
-This comes before recommendations. It is useful with the data I already have
-and lets me check what the data can actually support. Missing measurements
-should be visible, and a single session should not look like evidence of a trend.
+I want to try the approach workflow with real decisions and evaluate the
+baseline on later practice sessions. That means checking distance error, range
+coverage, and failure cases, with sessions kept together chronologically.
+Observed clearance percentages are a starting description, not a safety claim.
 
-It starts on my computer, with local data import, storage, and backup. Next
-I want an installable phone experience that can reopen with my saved data and
-work without a connection. Hosting, accounts, and automatic sync can wait.
-Private shot history does not need to be published to make the app useful.
+An [interactive synthetic demo](demo.md) now has a static GitHub Pages build
+and a manual deployment workflow, without an account system. Deployment is
+still pending. Personal-file import needs clearer demo/data labeling and storage
+controls before I advertise it as a public feature.
 
-## From the explorer to a caddie
+## From distance to risk
 
-The local [approach picker](journey/004-a-first-approach-picker.md) now accepts
-a target distance and optional rangefinder plays-like yardage and slope angle.
-It compares typical carry and shows alternatives with observed ranges.
-Chronological prediction evaluation remains ahead. Three adjacent
-irons are a useful starting comparison when I have suitable data; they do not
-limit which clubs I can explore now.
+The current carry window is one-dimensional. Next I want to compare paired
+landing outcomes against a target area, with explicit costs for short, long,
+left, and right misses. Missing lateral landing measurements limit what I can
+claim. Reported total does not model today's ground conditions.
 
-The recommendation should run locally from a saved profile, including when
-there is no connection on the course.
-
-## From yardage to risk
-
-Once that works, I want to plot my shots around a target and see what happens
-when I move a hazard or change how much risk I am willing to take. This should
-make the difference between a typical shot and a costly miss easier to see.
-
-Later practice sessions and course outcomes will help test whether those
-predictions hold up outside the data used to build them.
+Course feedback will matter before I trust practice-to-course adjustments or
+claim better scoring. Expected strokes requires evidence about the shots that
+follow, not just a distance chart.
 
 ## Learning to model my game
 
-Alongside the app, I plan to train and compare models for recent form and carry
-ranges. Bayesian modeling is a possible deeper exploration. The
-[modeling approach](approach.md) explains the questions behind these experiments.
+I plan to compare stable and recent-session baselines with regularized
+regression and quantile models. Bayesian partial pooling is an optional deeper
+experiment. The [modeling approach](approach.md) explains these questions.
 
-The app can remain useful while those experiments are underway. A model earns
-its place through results on later data, and an experiment can still teach me
-something when it does not beat the baseline.
+Training and tuning use earlier sessions; later evaluation stays separate.
+A model that loses to a simpler baseline can still be a useful learning result.
+There are no completed model experiments yet.
 
-## Longer-term ideas
+## Delivery and longer-term ideas
 
-I would like to bring concise recommendations to my Meta Ray-Ban Display
-glasses and investigate whether course photographs can add useful context.
-That may lead to a separate computer-vision experiment. Maps, measured
-distances, and trajectory data will matter before I can trust advice about
-fairway width or clearing a tree.
+An installable phone experience needs saved data, cached assets, and a tested
+cold start without a connection. Hosting a demo alone does not provide that.
+Accounts and automatic sync are optional, separate work.
+
+I would also like to try concise advice through my Meta Ray-Ban Display glasses.
+Course photos might support a later vision experiment, but recognizing a tree
+or fairway does not establish its distance, width, or required clearance.
+Measured geometry and supported flight information must come first.
