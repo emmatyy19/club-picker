@@ -37,9 +37,13 @@ actually helps when I am standing over the next shot.
 
 I can now explore my reviewed shots in a local UI: carry and total, dispersion,
 club filters, and a session timeline. My two club sets stay separate, and missing
-measurements stay visible. A first approach picker compares clubs by typical
-carry, with optional rangefinder plays-like yardage. Model experiments, hazard
-risk, and offline phone use are still ahead.
+measurements stay visible. Trackman report links have a reusable importer;
+Toptracer screenshots still need extraction and review.
+
+The approach picker compares where I want to finish with reported total, while
+using carry for a must-clear distance or landing area. It shows observed ranges
+and sample support, not a promise about my next shot. Model evaluation, lateral
+hazard risk, and an installable offline phone app are still ahead.
 
 ![My Shots explorer with synthetic seven-iron data](docs/images/synthetic-dispersion.jpg)
 
@@ -48,6 +52,18 @@ Shots and dates are invented.*
 
 [More screenshots and how the demo data is made](docs/showcase.md) ·
 [Run the local explorer](docs/explorer.md).
+
+## Try it with synthetic shots
+
+With Node 22.12+ installed, no private files or Python setup are needed:
+
+```bash
+npm ci --prefix web
+npm run showcase --prefix web
+```
+
+Open <http://127.0.0.1:5174> to explore the charts and approach picker.
+A [GitHub Pages demo](docs/demo.md) is prepared; it is not deployed yet.
 
 - [Project journey](docs/README.md): the decisions, experiments, and lessons as
   the project develops.

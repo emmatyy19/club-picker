@@ -6,6 +6,10 @@ export function loadLibrary(): Snapshot | null {
   return raw ? parseSnapshot(JSON.parse(raw)) : null;
 }
 export function saveLibrary(snapshot: Snapshot): void {
+  if (import.meta.env.MODE === "showcase")
+    throw new Error(
+      "Personal libraries cannot be saved in the synthetic demo.",
+    );
   localStorage.setItem(key, JSON.stringify(parseSnapshot(snapshot)));
 }
 export function download(snapshot: Snapshot): void {

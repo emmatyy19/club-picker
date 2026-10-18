@@ -87,3 +87,15 @@ it("showcase mode uses only validated synthetic data without fetching private da
   ).toBe(true);
   expect(fetcher).not.toHaveBeenCalled();
 });
+
+it("showcase cannot overwrite a personal library already stored on the origin", () => {
+  const personal = parseSnapshot(snapshot([shot]));
+  saveLibrary(personal);
+  vi.stubEnv("MODE", "showcase");
+  expect(() => saveLibrary(personal)).toThrow(
+    "Personal libraries cannot be saved",
+  );
+  expect(loadLibrary()).toBeNull();
+  vi.stubEnv("MODE", "production");
+  expect(loadLibrary()).toEqual(personal);
+});

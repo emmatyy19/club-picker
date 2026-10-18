@@ -11,8 +11,10 @@ long, left, or right. I want to keep those outcomes together so that a short
 shot that also misses right remains one observed outcome.
 
 My first [local baseline](journey/004-a-first-approach-picker.md) uses
-session-balanced median carry and the spread of my recorded shots. It is
-implemented, but has not been validated as a next-shot prediction.
+session-balanced medians and the spread of my recorded shots. Reported total
+is the finish reference; carry determines observed clearance and landing-window
+frequencies. It is implemented, but has not been validated as a next-shot
+prediction.
 Actual mishits belong in that picture. Different shot intents, such as a full
 swing and a deliberate punch, need separate treatment.
 
@@ -22,7 +24,7 @@ The same club can be a reasonable choice for an open approach and a poor one
 when its usual miss reaches a hazard. I want to compare possible outcomes
 against a target area and an explicit preference for risk.
 
-The first version will use simple costs for landing regions. A later system
+The planned spatial risk model will use simple costs for landing regions. A later system
 could estimate expected strokes, but that would need evidence about the shots
 I play afterward. Carry and total distance also answer different questions:
 clearing a hazard is not the same as predicting where the ball stops.

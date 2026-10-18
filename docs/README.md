@@ -12,7 +12,7 @@ I make afterward.
 | [From yardages to outcomes](journey/001-from-yardages-to-outcomes.md) | Starting point, October 2026 | Why I want a personal caddie, what I investigated, and why I am starting small |
 | [A place for the shots](journey/002-a-place-for-the-shots.md) | Data foundation, October 2026 | Private imports, repeatable history, and an audit tested with invented data |
 | [Seeing my shots together](journey/003-seeing-my-shots-together.md) | Local explorer, October 2026 | Unified views, physical club identity, missing measurements, and private backups |
-| [A first approach picker](journey/004-a-first-approach-picker.md) | Local baseline, October 2026 | Carry comparisons, rangefinder inputs, and observed ranges |
+| [A first approach picker](journey/004-a-first-approach-picker.md) | Local baseline, October 2026 | Finish targets, carry constraints, rangefinder inputs, and observed ranges |
 
 There are no completed model experiments yet. As they happen, I will add
 walkthroughs with comparisons, mistakes, and what I learned, including results
@@ -23,6 +23,7 @@ that favor a simpler approach.
 - [Direction and milestones](roadmap.md) gives a short view of progress.
 - [Modeling approach](approach.md) explains the main technical ideas and their
   limits. These are proposals until evaluated.
+- [Interactive demo](demo.md) explains the synthetic build and proposed hosting.
 - [Development setup](development.md) describes the current repository tools.
 - [Shot explorer](explorer.md) explains the local UI and backup workflow.
 - [Local shot imports](data-import.md) explains the working format and commands.

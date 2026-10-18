@@ -2,8 +2,10 @@
 
 The local explorer puts reviewed practice shots in one view. I can switch carry
 and total, combine club/source/set filters, inspect a shot, and select sessions
-or a date range. The first version runs on my computer. It does not recommend
-clubs yet, and phone installation and offline cold starts remain future work.
+or a date range. The Approach tab adds a [first club comparison](journey/004-a-first-approach-picker.md)
+using finish distance and optional carry constraints. Phone installation and
+offline cold starts remain future work. To try invented shots without a private
+library, use the [synthetic demo](demo.md).
 
 ## Run locally
 
@@ -25,7 +27,9 @@ normal local exploration does not use an external service or CDN.
 
 PDFs and screenshots still need extraction and review into the
 [manual CSV format](data-import.md). The UI accepts a versioned explorer JSON
-snapshot, not original provider exports. Here is a complete invented example:
+snapshot, not original provider exports. Shared Trackman report links can use
+the reusable importer in the [import guide](data-import.md); this is a local
+command, not a browser upload feature. Here is a complete invented example:
 
 ```bash
 uv run club-picker snapshot data/synthetic/shots.csv \
@@ -43,7 +47,8 @@ Export a backup before replacing a library you want to retain.
 Pass multiple reviewed CSV paths to the snapshot command to create a combined
 library. Each session needs an explicit `SOURCE/SESSION=SET` assignment. Confirm
 the physical set with the owner for every new ongoing session; do not infer it
-from Trackman or Toptracer. Club IDs in the CSV must already be set-specific.
+from Trackman or Toptracer unless the owner has explicitly authorized a standing
+default. Club IDs in the CSV must already be set-specific.
 Changing a set label in the UI does not create a new physical club identity.
 
 The exporter reads CSVs without changing the main SQLite store. Its snapshot
@@ -260,8 +265,9 @@ the JSON backup. Clearing site data does not remove repo files.
 `npm run build --prefix web` creates a static app in `web/dist/` without private
 shot history. `npm run preview --prefix web` serves that build locally after
 stopping the development server. Runtime assets are bundled. An installed phone
-app, service-worker caching, cloud sync, automated provider imports, trajectories,
-and recommendations are not implemented in this milestone.
+app, service-worker caching, cloud sync, provider account synchronization, and
+trajectory reconstruction are not implemented. A separate [showcase build](demo.md)
+bundles invented shots for an interactive demonstration.
 
 ## Check changes
 
