@@ -390,9 +390,7 @@ export function App() {
             src={`${import.meta.env.BASE_URL}bunny-caddie.svg`}
             alt="Bunny caddie"
           />{" "}
-          club picker
-          <span className="brand-divider" />{" "}
-          <span className="brand-section">My shots</span>
+          my caddie
         </div>
         <span className="local-label">
           <i /> {showcase ? "Interactive demo" : "Local workspace"}
@@ -1220,7 +1218,7 @@ export function App() {
           </>
         )}
         <footer>
-          <span>Club Picker</span>
+          <span>My Caddie</span>
           <span>
             {showcase
               ? "Synthetic shots. No account. No uploads."

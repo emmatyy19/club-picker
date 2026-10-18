@@ -20,7 +20,7 @@ export function download(snapshot: Snapshot): void {
   );
   const a = document.createElement("a");
   a.href = url;
-  a.download = "club-picker-private-backup.json";
+  a.download = "my-caddie-private-backup.json";
   document.body.appendChild(a);
   a.click();
   a.remove();
