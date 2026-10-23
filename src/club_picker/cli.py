@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from club_picker.audit import audit_shots
+from club_picker.evaluation_report import write_report
 from club_picker.explorer import explorer_snapshot
 from club_picker.importing import ADAPTER, parse_csv
 from club_picker.shots import (
@@ -86,9 +87,20 @@ def main(argv: list[str] | None = None) -> int:
     trackman.add_argument(
         "--refetch", action="store_true", help="Refresh the private report cache"
     )
+    evaluation = commands.add_parser(
+        "evaluate", help="Create a chronological carry backtest"
+    )
+    evaluation.add_argument("snapshot", type=Path)
+    evaluation.add_argument("--output", type=Path, default=Path("runs/carry-baseline"))
     args = parser.parse_args(argv)
     store = Store(Path(args.data_dir))
     try:
+        if args.command == "evaluate":
+            result = write_report(args.snapshot, args.output)
+            print(
+                json.dumps({"summary": result["summary"], "output": str(args.output)})
+            )
+            return 0
         if args.command == "trackman":
             config = read_object(args.config)
             cached = load_report(args.folder, refetch=args.refetch)
