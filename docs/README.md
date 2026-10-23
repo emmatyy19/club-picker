@@ -13,9 +13,10 @@ I make afterward.
 | [A place for the shots](journey/002-a-place-for-the-shots.md) | Data foundation, October 2026 | Private imports, repeatable history, and an audit tested with invented data |
 | [Seeing my shots together](journey/003-seeing-my-shots-together.md) | Local explorer, October 2026 | Unified views, physical club identity, missing measurements, and private backups |
 | [A first approach picker](journey/004-a-first-approach-picker.md) | Local baseline, October 2026 | Finish targets, carry constraints, rangefinder inputs, and observed ranges |
+| [Testing against later practice](journey/005-testing-later-sessions.md) | Development backtest, October 2026 | Stable and recent carry predictions, coverage, and limits |
 
-There are no completed model experiments yet. As they happen, I will add
-walkthroughs with comparisons, mistakes, and what I learned, including results
+The first baseline backtest is complete. No ML model has been trained yet.
+As experiments happen, I will add walkthroughs with comparisons, mistakes, and what I learned, including results
 that favor a simpler approach.
 
 ## More detail

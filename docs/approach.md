@@ -1,8 +1,9 @@
 # From Shots to Advice
 
-This is the approach I am starting with. The ideas here have not yet been
-validated on my own data. I will update the explanations as the experiments
-give me evidence to work with.
+This is the approach I am starting with. A first
+[development backtest](journey/005-testing-later-sessions.md) now compares stable
+and recent carry estimates. Recommendations have not been validated on course.
+I will update the explanations as the experiments give me evidence to work with.
 
 ## Describe the shot I might hit
 
