@@ -14,10 +14,12 @@ I make afterward.
 | [Seeing my shots together](journey/003-seeing-my-shots-together.md) | Local explorer, October 2026 | Unified views, physical club identity, missing measurements, and private backups |
 | [A first approach picker](journey/004-a-first-approach-picker.md) | Local baseline, October 2026 | Finish targets, carry constraints, rangefinder inputs, and observed ranges |
 | [Testing against later practice](journey/005-testing-later-sessions.md) | Development backtest, October 2026 | Stable and recent carry predictions, coverage, and limits |
+| [A small model that did not win](journey/006-a-small-model-that-did-not-win.md) | First ML experiment, October 2026 | Ridge training, chronological tuning, and a negative result |
 
-The first baseline backtest is complete. No ML model has been trained yet.
-As experiments happen, I will add walkthroughs with comparisons, mistakes, and what I learned, including results
-that favor a simpler approach.
+The first baseline backtest and Ridge experiment are complete. The trained model
+has not been adopted into recommendations.
+As experiments happen, I will add walkthroughs with comparisons, mistakes, and
+what I learned, including results that favor a simpler approach.
 
 ## More detail
 

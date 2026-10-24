@@ -92,9 +92,29 @@ def main(argv: list[str] | None = None) -> int:
     )
     evaluation.add_argument("snapshot", type=Path)
     evaluation.add_argument("--output", type=Path, default=Path("runs/carry-baseline"))
+    learning = commands.add_parser(
+        "learn", help="Run the bounded chronological Ridge experiment"
+    )
+    learning.add_argument(
+        "snapshot", type=Path, nargs="?", help="Omit for the invented learning exercise"
+    )
+    learning.add_argument("--output", type=Path, default=Path("runs/ridge-experiment"))
     args = parser.parse_args(argv)
     store = Store(Path(args.data_dir))
     try:
+        if args.command == "learn":
+            from club_picker.learning_report import write_experiment
+
+            result = write_experiment(args.snapshot, args.output)
+            print(
+                json.dumps(
+                    {
+                        "fitted_only": result["summary_fitted_only"],
+                        "output": str(args.output),
+                    }
+                )
+            )
+            return 0
         if args.command == "evaluate":
             result = write_report(args.snapshot, args.output)
             print(
