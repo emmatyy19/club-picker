@@ -32,7 +32,11 @@ clearing a hazard is not the same as predicting where the ball stops.
 
 ## Train models around useful questions
 
-| Question | Planned comparison | What I want to learn |
+The [first Ridge experiment](journey/006-a-small-model-that-did-not-win.md) is
+complete. It did not beat the recent mean on matched development sessions and
+has not been adopted. The other model families below remain planned.
+
+| Question | Comparison | What I want to learn |
 | --- | --- | --- |
 | Is recent form useful for predicting the next session? | Stable club profiles and recency weighting versus regularized regression | Feature engineering, fitting, and whether there is a repeatable signal |
 | Can I predict the short and long ends of my carry range? | Historical quantiles versus linear quantile models, then small boosted trees if warranted | Training for uncertainty, interval coverage, and asymmetric errors |

@@ -11,6 +11,11 @@ dependencies = []
 [project.scripts]
 club-picker = "club_picker.cli:main"
 
+[project.optional-dependencies]
+ml = [
+    "scikit-learn>=1.9.1",
+]
+
 [build-system]
 requires = ["uv_build>=0.11.28,<0.12.0"]
 build-backend = "uv_build"
@@ -54,4 +59,5 @@ dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.3",
+    "scikit-learn>=1.9.1",
 ]
