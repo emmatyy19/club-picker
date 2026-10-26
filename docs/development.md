@@ -27,7 +27,13 @@ Reusable code lives under `src/club_picker/`. Configuration is centralized in
 
 Use Node 22.12+ or Node 24. Frontend dependencies live in `web/package.json` and
 `web/package-lock.json`; use `npm ci --prefix web` for reproducible installs.
-Run `npm run dev --prefix web`, then open <http://127.0.0.1:5173>.
+On macOS, double-click `Launch My Caddie.command` in the repository root. It
+starts the personal app and opens your browser, or reopens an existing local
+My Caddie dev server. Keep its terminal window open; Control-C stops the server.
+It uses Node 24 from nvm when available and installs frontend dependencies if
+they are missing.
+
+Alternatively, run `npm run dev --prefix web`, then open <http://127.0.0.1:5173>.
 The [explorer guide](explorer.md) covers sample data, backups, and local storage.
 
 Run `npm run format:check --prefix web`, `npm test --prefix web`, and

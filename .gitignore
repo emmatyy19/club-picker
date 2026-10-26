@@ -23,6 +23,7 @@ test-results.xml
 .DS_Store
 .vscode/*
 !.vscode/settings.json
+!.vscode/launch.json
 !.vscode/extensions.json
 
 # Credentials and local settings

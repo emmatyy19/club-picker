@@ -99,9 +99,22 @@ def main(argv: list[str] | None = None) -> int:
         "snapshot", type=Path, nargs="?", help="Omit for the invented learning exercise"
     )
     learning.add_argument("--output", type=Path, default=Path("runs/ridge-experiment"))
+    ranges = commands.add_parser(
+        "ranges", help="Inspect chronological carry-range coverage"
+    )
+    ranges.add_argument("snapshot", type=Path)
+    ranges.add_argument("--output", type=Path, default=Path("runs/carry-ranges"))
     args = parser.parse_args(argv)
     store = Store(Path(args.data_dir))
     try:
+        if args.command == "ranges":
+            from club_picker.range_report import write_ranges
+
+            result = write_ranges(args.snapshot, args.output)
+            print(
+                json.dumps({"summary": result["summary"], "output": str(args.output)})
+            )
+            return 0
         if args.command == "learn":
             from club_picker.learning_report import write_experiment
 

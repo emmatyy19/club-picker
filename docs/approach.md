@@ -52,6 +52,11 @@ evidence where it helps while preserving club-specific differences. The
 illustrates the general technique; whether it helps my golf data is an open
 question.
 
+The [range diagnostic](journey/007-understanding-the-range-misses.md) found
+that coverage differs substantially between limited and longer histories. It
+also separates club-balanced coverage from counting every shot equally. No
+calibrated range adjustment has been adopted.
+
 ## Keep the comparison honest
 
 The model needs to work before I hit the ball. Current-shot ball speed, spin,

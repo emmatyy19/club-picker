@@ -71,3 +71,16 @@ weighting remain future work. There is no trained model or demonstrated scoring
 improvement. A downloadable recommendation profile and an installable offline
 phone experience are also planned. Running locally does not mean the page can
 reopen on a phone without a connection.
+
+## Showing the history behind a suggestion
+
+The cards now count distinct practice dates alongside carry shots. A recent
+carry comparison uses date-balanced medians for the latest three dates and all
+older dates, with at least two older dates required. These periods do not overlap.
+Same-day sessions share one date in this comparison. Undated shots remain in the
+existing recommendation but are excluded from the date comparison.
+
+I show “Limited history” with fewer than five dated practice days or twenty
+shots. These are display rules, not validated reliability thresholds. A larger
+sample does not automatically earn a confidence label. The recent comparison
+shows a recorded change, not a forecast, and does not affect club ranking.

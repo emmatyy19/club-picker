@@ -395,10 +395,13 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
                       </dd>
                     </div>
                     <div>
-                      <dt>Practice support</dt>
+                      <dt>Carry history</dt>
                       <dd>
-                        {p.shots} shots · {p.sessions}{" "}
-                        {p.sessions === 1 ? "session" : "sessions"}
+                        {p.history.dates} practice{" "}
+                        {p.history.dates === 1 ? "date" : "dates"} · {p.shots}{" "}
+                        shots
+                        {p.history.undatedShots > 0 &&
+                          ` (${p.history.undatedShots} undated)`}
                       </dd>
                     </div>
                     <div>
@@ -406,9 +409,52 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
                       <dd>{p.latest ?? "Date unknown"}</dd>
                     </div>
                   </dl>
-                  {(p.sessions < 3 || p.shots < 20) && (
-                    <p className="muted small">Limited practice history</p>
-                  )}
+                  <div className="approach-history">
+                    {(p.history.dates < 5 || p.shots < 20) && (
+                      <span className="history-badge">Limited history</span>
+                    )}
+                    {p.history.comparison ? (
+                      <>
+                        <div className="approach-history-values">
+                          <div>
+                            <span>Recent carry</span>
+                            <strong>
+                              {show(p.history.comparison.recent.median)} {unit}
+                            </strong>
+                            <small>
+                              Latest 3 dates ·{" "}
+                              {p.history.comparison.recent.shots} shots
+                            </small>
+                          </div>
+                          <div>
+                            <span>Earlier carry</span>
+                            <strong>
+                              {show(p.history.comparison.earlier.median)} {unit}
+                            </strong>
+                            <small>
+                              {p.history.comparison.earlier.sessions} earlier
+                              dates · {p.history.comparison.earlier.shots} shots
+                            </small>
+                          </div>
+                        </div>
+                        <p className="muted small">
+                          {Math.abs(
+                            (p.history.comparison.recent.median -
+                              p.history.comparison.earlier.median) /
+                              scale,
+                          ) < 0.05
+                            ? "Recent carry is unchanged."
+                            : `Recent carry is ${show(Math.abs(p.history.comparison.recent.median - p.history.comparison.earlier.median))} ${unit} ${p.history.comparison.recent.median > p.history.comparison.earlier.median ? "longer" : "shorter"}.`}{" "}
+                          Recorded change, not a forecast.
+                        </p>
+                      </>
+                    ) : (
+                      <p className="muted small">
+                        Recent comparison needs 5 dated practice days: 3 recent
+                        and at least 2 earlier.
+                      </p>
+                    )}
+                  </div>
                 </article>
               ))}
             </div>
@@ -455,6 +501,12 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
           their own plays-like distances on a slope. The slope angle is context
           only and is not applied again. Without plays-like yardage, slope is
           not corrected. Wind, lie, rollout, and hazards are not modeled yet.
+        </p>
+        <p>
+          Recent and earlier carry are date-balanced medians from separate
+          periods. Undated shots stay in the overall recommendation but are
+          excluded from that comparison. Five dates is a display minimum, not a
+          reliability guarantee; the comparison does not change ranking.
         </p>
         <p>
           The middle 80% describes recorded carry variation with equal weight
