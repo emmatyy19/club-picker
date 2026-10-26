@@ -223,3 +223,30 @@ reports. Changed measurements or identities stop the import. Older manually
 extracted sessions need their private ID mapping reconciled before this importer
 can revisit the same date and bag. It deliberately refuses that overlap rather
 than guessing which shots match. PDFs still need a separate extraction route.
+
+### Choose a Trackman folder interactively
+
+From the repository root:
+
+```bash
+uv run python -m club_picker.trackman_picker
+```
+
+The launcher finds folders containing `report-link.txt`, sorts dated folders
+newest first, and puts undated folders last (ordered by link modification time).
+Choose a session number, accept the configured owner-authorized default club
+set or choose another configured set, and review the existing importer's preview.
+Enter `y` to apply; Enter at the final prompt leaves the library unchanged.
+A preview can download the private report cache, but does not import shots.
+The report's own dates remain authoritative, regardless of the folder label.
+
+For a read-only folder inventory, add `--list`. A cached report does not mean it
+was imported; the preview checks duplicate shot identities. Run the launcher
+again for another session. Toptracer screenshots still need reviewed extraction.
+
+In VS Code, open **Run and Debug**, select **Import Trackman session (choose
+folder)**, and press F5. The checked-in launch configuration uses the workspace
+`.venv` and integrated terminal so the same interactive prompts work while
+stepping through the importer. Run `uv sync --locked --all-groups` first if the
+environment is missing; debugging requires the editor's Python Debugger extension.
+No session dates, report URLs or personal paths are stored in the launch config.

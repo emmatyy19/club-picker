@@ -72,7 +72,35 @@ export function approachEligible(s: Shot): boolean {
     ["full", "partial", "unknown"].includes(s.intent)
   );
 }
+/** Descriptive, non-overlapping date windows; never used for ranking. */
+export function carryHistory(rows: Shot[]) {
+  const dates = new Map<string, number[]>();
+  let undatedShots = 0;
+  for (const row of rows) {
+    if (!row.session_date) {
+      undatedShots++;
+      continue;
+    }
+    dates.set(row.session_date, [
+      ...(dates.get(row.session_date) ?? []),
+      row.carry_m,
+    ]);
+  }
+  const ordered = [...dates.entries()].sort(([a], [b]) => a.localeCompare(b));
+  const comparison =
+    ordered.length >= 5
+      ? {
+          recent: summarizeCarry(ordered.slice(-3).map(([, values]) => values)),
+          earlier: summarizeCarry(
+            ordered.slice(0, -3).map(([, values]) => values),
+          ),
+        }
+      : null;
+  return { dates: dates.size, undatedShots, comparison };
+}
+
 export type ApproachProfile = CarrySummary & {
+  history: ReturnType<typeof carryHistory>;
   club: Shot;
   latest: string | null;
   carrySessions: number[][];
@@ -116,6 +144,7 @@ export function approachProfiles(
       total: totalSessions.size
         ? summarizeCarry([...totalSessions.values()])
         : null,
+      history: carryHistory(rows),
       club: rows[0],
       latest: dates.at(-1) ?? null,
     };

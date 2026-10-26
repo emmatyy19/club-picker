@@ -15,6 +15,7 @@ I make afterward.
 | [A first approach picker](journey/004-a-first-approach-picker.md) | Local baseline, October 2026 | Finish targets, carry constraints, rangefinder inputs, and observed ranges |
 | [Testing against later practice](journey/005-testing-later-sessions.md) | Development backtest, October 2026 | Stable and recent carry predictions, coverage, and limits |
 | [A small model that did not win](journey/006-a-small-model-that-did-not-win.md) | First ML experiment, October 2026 | Ridge training, chronological tuning, and a negative result |
+| [Understanding the range misses](journey/007-understanding-the-range-misses.md) | Range diagnostics, October 2026 | Club weighting, limited history, and short versus long misses |
 
 The first baseline backtest and Ridge experiment are complete. The trained model
 has not been adopted into recommendations.

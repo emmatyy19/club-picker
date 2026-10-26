@@ -219,3 +219,35 @@ it("prefers joint landing and clearance fit over a club that always overshoots",
   expect(ranked[1].fits).toBe(0);
   expect(ranked[1].clears).toBe(1);
 });
+
+it("compares separate date-balanced windows, merging same-day sessions and excluding undated shots", () => {
+  const rows = [100, 110, 120, 130, 140].map((carry_m, i) => ({
+    ...shot,
+    shot_id: String(i),
+    session_id: String(i),
+    session_date: `2026-01-0${i + 1}`,
+    carry_m,
+  }));
+  rows.push({ ...rows[0], session_id: "restart", shot_id: "extra" });
+  const profile = approachProfiles(
+    [...rows, { ...shot, session_date: null, carry_m: 500 }],
+    "a",
+    approachContext(shot),
+  )[0];
+  expect(profile.history.dates).toBe(5);
+  expect(profile.history.undatedShots).toBe(1);
+  expect(profile.history.comparison?.earlier.median).toBe(105);
+  expect(profile.history.comparison?.recent.median).toBe(130);
+  expect(profile.history.comparison?.earlier.sessions).toBe(2);
+  expect(profile.shots).toBe(7);
+  const reversed = approachProfiles(
+    [...rows].reverse(),
+    "a",
+    approachContext(shot),
+  )[0];
+  expect(reversed.history.comparison).toEqual(profile.history.comparison);
+  expect(
+    approachProfiles(rows.slice(0, 4), "a", approachContext(shot))[0].history
+      .comparison,
+  ).toBeNull();
+});

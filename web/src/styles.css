@@ -1551,3 +1551,39 @@ footer {
 .clearance-result {
   font-size: 14px;
 }
+
+.approach-history {
+  border-top: 1px solid var(--border, #dce5df);
+  margin-top: 20px;
+  padding-top: 20px;
+  display: grid;
+  gap: 14px;
+}
+.approach-history p {
+  margin: 0;
+}
+.approach-history-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.approach-history-values > div {
+  display: grid;
+  gap: 6px;
+}
+.approach-history-values span,
+.approach-history-values small {
+  color: #586b61;
+}
+.approach-history-values strong {
+  font-size: 1.15rem;
+}
+.history-badge {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f5eedf;
+  color: #705323;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
