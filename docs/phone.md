@@ -64,6 +64,7 @@ The normal dev server does not register a worker, avoiding stale development
 assets. The separate `build:showcase` remains a synthetic-only preview.
 
 The Pages workflow now builds the phone version, with synthetic data as its
-initial library. It still runs manually from main after merge; implementing this
-feature does not deploy it. CI builds both variants. Public deployment never
-reads `data/private`.
+initial library. Pushes to main, including merged PRs, trigger deployment after
+the workflow passes frontend checks and builds the app. A manual run remains
+available for retries. CI builds both variants. Public deployment never reads
+`data/private`.

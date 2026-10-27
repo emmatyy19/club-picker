@@ -35,17 +35,17 @@ the installable app with optional on-device data.
 ## GitHub Pages
 
 The prepared [deployment workflow](../.github/workflows/pages.yml) builds and
-tests the phone version with a synthetic default library, then uploads only `web/dist`. It runs manually
-from `main`, with deployment permissions limited to the deploy job. Pull
+tests the phone version with a synthetic default library, then uploads only `web/dist`. It runs automatically on pushes to `main`, including PR merges, with deployment permissions limited to the deploy job. Pull
 requests run both normal and showcase builds in CI without publishing a site.
 
 To launch after these changes are merged:
 
 1. Make the repository public when ready to share its code and history.
 2. In repository **Settings → Pages**, choose **GitHub Actions** as the source.
-3. In **Actions → Deploy My Caddie**, choose **Run workflow** on `main`.
+3. Merge changes into `main` to trigger deployment. For a manual retry, use
+   **Actions → Deploy My Caddie → Run workflow** on `main`.
 4. Open the deployment URL reported by the workflow and check the explorer and
-   Approach picker. Use the same workflow to publish later updates.
+   Approach picker. Later merges deploy automatically after the workflow checks pass.
 
 The expected address is `https://emmatyy19.github.io/club-picker/`. The new phone features appear only after deploying the new build. GitHub supports a project site per repository alongside a
 personal site, and public repositories can use Pages on GitHub Free.

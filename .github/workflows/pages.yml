@@ -1,7 +1,9 @@
 name: Deploy My Caddie
 
-# Deployment is deliberately manual until the public launch is approved.
+# Deploy merged changes automatically; retain a manual retry option.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
