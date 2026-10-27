@@ -40,3 +40,5 @@ Public examples can use prepared real measurements or clearly labeled invented
 data.
 
 - [Explorer showcase](showcase.md): screenshots with synthetic shots generated from my private performance summaries.
+
+- [Using My Caddie on my phone](phone.md): device-local imports, offline setup, backups, and verification limits.

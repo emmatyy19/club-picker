@@ -1587,3 +1587,47 @@ footer {
   font-size: 0.8rem;
   font-weight: 600;
 }
+
+.feedback-controls,
+.feedback-actions,
+.feedback-restore {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 20px 0;
+}
+.feedback-controls > .mantine-Select-root {
+  flex: 1 1 170px;
+}
+.feedback-entries {
+  display: grid;
+  gap: 16px;
+  max-height: 650px;
+  overflow-y: auto;
+  margin-top: 20px;
+}
+.feedback-entry {
+  border: 1px solid #dce5df;
+  border-radius: 12px;
+  padding: 20px;
+}
+.feedback-entry p {
+  margin: 10px 0 16px;
+}
+.feedback-restore {
+  padding: 16px;
+  background: #f5eedf;
+  border-radius: 12px;
+}
+.offline-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0 20px;
+}
+.offline-status p {
+  flex-basis: 100%;
+  margin: 0;
+}

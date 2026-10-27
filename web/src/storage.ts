@@ -1,5 +1,8 @@
 import { parseSnapshot, type Snapshot } from "./data";
-const key = "club-picker.library.v1";
+const key =
+  import.meta.env.MODE === "phone"
+    ? `my-caddie.device-library.v1:${import.meta.env.BASE_URL}`
+    : "club-picker.library.v1";
 export function loadLibrary(): Snapshot | null {
   if (import.meta.env.MODE === "showcase") return null;
   const raw = localStorage.getItem(key);
@@ -29,7 +32,7 @@ export function download(snapshot: Snapshot): void {
 
 // Read only the reviewed file served by Vite, never raw provider exports.
 export async function loadRepoLibrary(): Promise<Snapshot | null> {
-  if (import.meta.env.MODE === "showcase") {
+  if (["showcase", "phone"].includes(import.meta.env.MODE)) {
     const data = await import("../../data/synthetic/showcase.json");
     return parseSnapshot(data.default);
   }

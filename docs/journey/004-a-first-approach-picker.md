@@ -84,3 +84,25 @@ I show “Limited history” with fewer than five dated practice days or twenty
 shots. These are display rules, not validated reliability thresholds. A larger
 sample does not automatically earn a confidence label. The recent comparison
 shows a recorded change, not a forecast, and does not affect club ranking.
+
+## Recording what I actually play
+
+The Approach Picker now has a collapsible on-course log. Before a shot, I can
+save the suggestion alongside the club and full or partial swing I intend to
+play. The saved record keeps the target, slope inputs, carry constraints,
+measurement context, descriptive estimates, and sample support from that moment.
+Refreshing my practice library does not rewrite that record.
+
+After playing, I can record short/on-target/long, left/on-line/right, and a
+hazard outcome separately. Unrecorded fields stay unknown. These describe the
+ball's finish relative to my target, not measured carry or whether it hit a green.
+Only the played club has an observed result; this does not tell me what would
+have happened with another club.
+
+The log stays in this browser's local storage, separate from the shot library.
+It is not automatically written to the repo or synced between devices. Private
+JSON export and validated restore provide a backup; restoring requires confirming
+replacement of the existing log. Keep these backups private because they include
+save timestamps and measurement context. The public synthetic demo uses temporary
+in-memory entries only. This first log does not train or change recommendations,
+and is not yet an offline phone app.

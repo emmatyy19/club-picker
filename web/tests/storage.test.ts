@@ -99,3 +99,21 @@ it("showcase cannot overwrite a personal library already stored on the origin", 
   vi.stubEnv("MODE", "production");
   expect(loadLibrary()).toEqual(personal);
 });
+
+it("phone build isolates imported data and never requests the private repo endpoint", async () => {
+  const personal = parseSnapshot(snapshot([shot]));
+  saveLibrary(personal);
+  vi.stubEnv("MODE", "phone");
+  vi.resetModules();
+  const phone = await import("../src/storage");
+  const fetcher = vi.fn();
+  vi.stubGlobal("fetch", fetcher);
+  expect(phone.loadLibrary()).toBeNull();
+  expect((await phone.loadRepoLibrary())?.shots.length).toBe(1320);
+  phone.saveLibrary(
+    parseSnapshot(snapshot([{ ...shot, shot_id: "phone-only" }])),
+  );
+  expect(phone.loadLibrary()?.shots[0].shot_id).toBe("phone-only");
+  expect(loadLibrary()).toEqual(personal);
+  expect(fetcher).not.toHaveBeenCalled();
+});

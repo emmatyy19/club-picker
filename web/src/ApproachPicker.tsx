@@ -9,6 +9,7 @@ import {
   approachTarget,
   rankFinishApproaches,
 } from "./approach";
+import { FeedbackLog } from "./FeedbackLog";
 import { MeasurementContext } from "./MeasurementContext";
 import type { Shot, Unit } from "./data";
 
@@ -467,6 +468,54 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
           </>
         )}
       </div>
+      <FeedbackLog
+        key={
+          shots.every((s) => s.shot_id.startsWith("synthetic-"))
+            ? "demo"
+            : "personal"
+        }
+        demo={
+          import.meta.env.MODE === "showcase" ||
+          (import.meta.env.MODE === "phone" &&
+            shots.every((s) => s.shot_id.startsWith("synthetic-")))
+        }
+        unit={unit}
+        clubs={[
+          ...new Map(
+            shots
+              .filter((s) => s.set_id === chosenSet)
+              .map((s) => [s.club_id, { id: s.club_id, label: s.club_label }]),
+          ).values(),
+        ]}
+        plan={
+          ranked[0] && target !== null
+            ? {
+                version: "finish-baseline-v1",
+                set: chosenSet,
+                context: chosenContext,
+                targetM: target,
+                measuredM: Number(distance) * scale,
+                playsLikeM: playsLike === "" ? null : Number(playsLike) * scale,
+                angle: angle === "" ? null : Number(angle),
+                mustCarryM: clearance,
+                window,
+                suggested: {
+                  id: ranked[0].club.club_id,
+                  label: ranked[0].club.club_label,
+                },
+                intent: ranked[0].club.intent as "full" | "partial" | "unknown",
+                carryM: ranked[0].median,
+                totalM: ranked[0].total?.median ?? null,
+                lowM: ranked[0].low,
+                highM: ranked[0].high,
+                shots: ranked[0].shots,
+                dates: ranked[0].history.dates,
+                clears: ranked[0].clears,
+                fits: ranked[0].fits,
+              }
+            : null
+        }
+      />
       <details className="approach-context">
         <summary>
           Practice settings{sample ? ` · ${sample.source}` : ""}
