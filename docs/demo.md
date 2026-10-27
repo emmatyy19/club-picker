@@ -2,7 +2,8 @@
 
 The charts are more useful when I can move the date range, compare clubs, and
 inspect a shot. I want visitors to try that themselves, alongside the screenshots.
-The synthetic-only GitHub Pages build is ready locally, but not deployed yet.
+The public demo uses synthetic data. The new [phone build](phone.md) adds optional
+on-device library import and offline access; it needs a deployment after merge.
 
 ## Try the synthetic version locally
 
@@ -28,12 +29,13 @@ npm run build:showcase --prefix web
 The output is `web/dist/`. Relative asset paths support a repository subpath as
 well as a standalone site. The normal `build` command produces the app without
 the bundled demo library. Neither build includes original exports or private
-shot history. A static build does not provide an installable offline app.
+shot history. These commands keep the original synthetic-only preview. Use `build:phone` for
+the installable app with optional on-device data.
 
 ## GitHub Pages
 
 The prepared [deployment workflow](../.github/workflows/pages.yml) builds and
-tests the synthetic version, then uploads only `web/dist`. It runs manually
+tests the phone version with a synthetic default library, then uploads only `web/dist`. It runs manually
 from `main`, with deployment permissions limited to the deploy job. Pull
 requests run both normal and showcase builds in CI without publishing a site.
 
@@ -41,19 +43,18 @@ To launch after these changes are merged:
 
 1. Make the repository public when ready to share its code and history.
 2. In repository **Settings → Pages**, choose **GitHub Actions** as the source.
-3. In **Actions → Deploy synthetic demo**, choose **Run workflow** on `main`.
+3. In **Actions → Deploy My Caddie**, choose **Run workflow** on `main`.
 4. Open the deployment URL reported by the workflow and check the explorer and
    Approach picker. Use the same workflow to publish later updates.
 
-The expected address is `https://emmatyy19.github.io/club-picker/`. It is not a
-live demo link yet. GitHub supports a project site per repository alongside a
+The expected address is `https://emmatyy19.github.io/club-picker/`. The new phone features appear only after deploying the new build. GitHub supports a project site per repository alongside a
 personal site, and public repositories can use Pages on GitHub Free.
 See [GitHub's Pages overview](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)
 and [custom workflow setup](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
 ## Demo data and controls
 
-The demo always opens the committed invented library. **About this demo**
+The separate synthetic-only preview always opens the committed invented library. **About this demo**
 explains its source, links to the project, and offers **Reset demo**. Personal
 file restore and backup controls are absent. The demo does not read or write
 the local app's saved shot library; its preferences and saved filters use

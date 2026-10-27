@@ -1,4 +1,4 @@
-name: Deploy synthetic demo
+name: Deploy My Caddie
 
 # Deployment is deliberately manual until the public launch is approved.
 on:
@@ -26,10 +26,10 @@ jobs:
       - run: npm ci --prefix web
       - run: npm run format:check --prefix web
       - run: npm test --prefix web
-      - run: npm run build:showcase --prefix web
+      - run: npm run build:phone --prefix web
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Upload only the synthetic site
+      - name: Upload static app with synthetic default data
         uses: actions/upload-pages-artifact@v4
         with:
           path: web/dist

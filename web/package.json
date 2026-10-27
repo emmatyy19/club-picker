@@ -11,10 +11,11 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5173 --strictPort",
     "test": "vitest run",
-    "format": "prettier --write src tests vite.config.ts tsconfig.json package.json index.html",
-    "format:check": "prettier --check src tests vite.config.ts tsconfig.json package.json index.html",
+    "format": "prettier --write src tests vite.config.ts tsconfig.json package.json index.html offline-plugin.ts",
+    "format:check": "prettier --check src tests vite.config.ts tsconfig.json package.json index.html offline-plugin.ts",
     "showcase": "vite --host 127.0.0.1 --port 5174 --strictPort --mode showcase",
-    "build:showcase": "tsc -b && vite build --mode showcase --base=./"
+    "build:showcase": "tsc -b && vite build --mode showcase --base=./",
+    "build:phone": "tsc -b && vite build --mode phone --base=./"
   },
   "dependencies": {
     "@mantine/core": "^8.3.0",

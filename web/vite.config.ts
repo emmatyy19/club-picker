@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { offlinePlugin } from "./offline-plugin";
 import react from "@vitejs/plugin-react";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -9,10 +10,11 @@ const snapshot = fileURLToPath(
 export default defineConfig({
   plugins: [
     react(),
+    offlinePlugin(),
     {
       name: "local-reviewed-snapshot",
       configureServer(server) {
-        if (server.config.mode === "showcase") return;
+        if (["showcase", "phone"].includes(server.config.mode)) return;
         server.middlewares.use(
           "/__local_snapshot",
           async (_request, response) => {

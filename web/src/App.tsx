@@ -13,6 +13,7 @@ import {
   Table,
   TextInput,
 } from "@mantine/core";
+import { OfflineStatus } from "./OfflineStatus";
 import { ApproachPicker } from "./ApproachPicker";
 import { ShotChart } from "./Chart";
 import { MeasurementContext as Context } from "./MeasurementContext";
@@ -58,12 +59,18 @@ const dimensions: { field: Dimension; label: string }[] = [
 ];
 
 const showcase = import.meta.env.MODE === "showcase";
-const preferencesKey = showcase
-  ? "club-picker.showcase.preferences.v1"
-  : "club-picker.preferences.v1";
-const savedViewKey = showcase
-  ? "club-picker.showcase.saved-view.v1"
-  : "club-picker.saved-view.v1";
+const preferencesKey =
+  import.meta.env.MODE === "phone"
+    ? `my-caddie.phone.preferences:${import.meta.env.BASE_URL}`
+    : showcase
+      ? "club-picker.showcase.preferences.v1"
+      : "club-picker.preferences.v1";
+const savedViewKey =
+  import.meta.env.MODE === "phone"
+    ? `my-caddie.phone.view:${import.meta.env.BASE_URL}`
+    : showcase
+      ? "club-picker.showcase.saved-view.v1"
+      : "club-picker.saved-view.v1";
 type Preferences = {
   metric: Metric;
   unit: Unit;
@@ -75,7 +82,9 @@ type Preferences = {
   separateTrendGroups: boolean;
 };
 const defaults: Preferences = {
-  metric: import.meta.env.MODE === "showcase" ? "total" : "carry",
+  metric: ["showcase", "phone"].includes(import.meta.env.MODE)
+    ? "total"
+    : "carry",
   unit: "yd",
   colorBy: "club_id",
   view: "dispersion",
@@ -112,6 +121,10 @@ function preferences(): Preferences {
   return defaults;
 }
 export function App() {
+  const phone = import.meta.env.MODE === "phone";
+  const [personalDevice, setPersonalDevice] = useState(false);
+  const showcase =
+    import.meta.env.MODE === "showcase" || (phone && !personalDevice);
   const [library, setLibrary] = useState<Snapshot | null>(null),
     [pending, setPending] = useState<Snapshot | null>(null);
   const [ready, setReady] = useState(false),
@@ -178,6 +191,7 @@ export function App() {
     }
     setPersistent(saved);
     setLibrary(snapshot);
+    setPersonalDevice(true);
     setLibrarySource("browser");
     setFilters(emptyFilters);
     setSelected("");
@@ -187,6 +201,20 @@ export function App() {
     if (initialized.current) return;
     initialized.current = true;
     const init = async () => {
+      if (phone) {
+        try {
+          const saved = loadLibrary();
+          setLibrary(saved ?? (await loadRepoLibrary()));
+          setPersonalDevice(Boolean(saved));
+          setLibrarySource(saved ? "browser" : "repo");
+        } catch {
+          setError(
+            "Could not read your device library. It has not been overwritten. Import a valid backup in Data settings.",
+          );
+          setLibrary(await loadRepoLibrary());
+        }
+        return;
+      }
       if (import.meta.env.DEV || import.meta.env.MODE === "showcase") {
         try {
           const snapshot = await loadRepoLibrary();
@@ -333,7 +361,7 @@ export function App() {
   const updatePrefs = (p: Partial<Preferences>) =>
     setPrefs((v) => ({ ...v, ...p }));
   const startImport = async (file: File | null) => {
-    if (!file || showcase) return;
+    if (!file || import.meta.env.MODE === "showcase") return;
     setError("");
     setNotice("");
     try {
@@ -393,16 +421,24 @@ export function App() {
           my caddie
         </div>
         <span className="local-label">
-          <i /> {showcase ? "Interactive demo" : "Local workspace"}
+          <i />{" "}
+          {phone
+            ? personalDevice
+              ? "On this device"
+              : "Synthetic demo"
+            : showcase
+              ? "Interactive demo"
+              : "Local workspace"}
         </span>
       </header>
       <main>
+        {phone && <OfflineStatus compact />}
         <div className="page-heading">
           <div>
             <h1>{workspace === "shots" ? "My Shots" : "Approach picker"}</h1>
           </div>
           <Group gap="sm">
-            {import.meta.env.DEV && !showcase && (
+            {import.meta.env.DEV && !showcase && !phone && (
               <Button
                 loading={refreshing}
                 disabled={!ready}
@@ -416,7 +452,11 @@ export function App() {
               disabled={refreshing || !ready}
               onClick={() => setSettings(true)}
             >
-              {showcase ? "About this demo" : "Data settings"}
+              {phone
+                ? "Data & offline"
+                : showcase
+                  ? "About this demo"
+                  : "Data settings"}
             </Button>
           </Group>
         </div>
@@ -458,7 +498,7 @@ export function App() {
           </section>
         ) : (
           <>
-            {import.meta.env.MODE === "showcase" && (
+            {showcase && (
               <p className="showcase-note">
                 <strong>Synthetic showcase</strong> · Generated from summary
                 statistics of my private shot data. Shots and dates are
@@ -482,7 +522,7 @@ export function App() {
                 <span className="status-dot" />
                 <span>
                   {librarySource === "repo"
-                    ? import.meta.env.MODE === "showcase"
+                    ? showcase
                       ? "Synthetic data"
                       : "From your repo"
                     : persistent
@@ -490,10 +530,12 @@ export function App() {
                       : "Temporary browser copy"}
                   <small>
                     {librarySource === "repo"
-                      ? import.meta.env.MODE === "showcase"
+                      ? showcase
                         ? "Illustration, not actual sessions."
                         : "Refresh after processing new sessions."
-                      : "Repo files are unchanged."}
+                      : phone
+                        ? "Saved on this device only."
+                        : "Repo files are unchanged."}
                   </small>
                 </span>
               </div>
@@ -847,7 +889,7 @@ export function App() {
                     </span>
                   </Accordion.Control>
                   <Accordion.Panel>
-                    {import.meta.env.MODE === "showcase" && (
+                    {showcase && (
                       <p className="showcase-note">
                         <strong>Synthetic showcase</strong> · Generated from my
                         private performance summaries. Shots and dates are
@@ -989,7 +1031,7 @@ export function App() {
                     </span>
                   </Accordion.Control>
                   <Accordion.Panel>
-                    {import.meta.env.MODE === "showcase" && (
+                    {showcase && (
                       <p className="showcase-note">
                         <strong>Synthetic showcase</strong> · Generated from my
                         private performance summaries. Shots and dates are
@@ -1229,9 +1271,54 @@ export function App() {
       <Modal
         opened={settings}
         onClose={() => setSettings(false)}
-        title={showcase ? "About this demo" : "Data settings"}
+        title={
+          phone
+            ? "Data & offline"
+            : showcase
+              ? "About this demo"
+              : "Data settings"
+        }
       >
-        {showcase ? (
+        {phone ? (
+          <>
+            <OfflineStatus />
+            <h3>Use my own data on this device</h3>
+            <p>
+              Import a prepared library JSON from your computer. The file is
+              read on this device and is not uploaded. It replaces the current
+              library here.
+            </p>
+            <p className="muted small">
+              On your computer: Data settings → Export backup. Transfer that
+              file to your phone. Browser storage can be cleared, so keep the
+              original backup. Import again after processing new practice
+              sessions.
+            </p>
+            <Group>
+              <FileButton
+                accept="application/json,.json"
+                onChange={(file) => {
+                  setSettings(false);
+                  void startImport(file);
+                }}
+              >
+                {(props) => <Button {...props}>Import my library</Button>}
+              </FileButton>
+              <Button
+                variant="default"
+                disabled={!personalDevice || !library}
+                onClick={() => library && download(library)}
+              >
+                Export private backup
+              </Button>
+            </Group>
+            <p className="muted small">
+              {personalDevice
+                ? "Your library is active on this device. Nothing is synced to GitHub."
+                : "You are viewing invented shots. Import your own data before using suggestions for your game."}
+            </p>
+          </>
+        ) : showcase ? (
           <>
             <p>
               Explore invented shots generated from summary statistics of my own
