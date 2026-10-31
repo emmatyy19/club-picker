@@ -61,7 +61,7 @@ export function Playback({
       <span className="playback-status" role="status">
         {index >= 0
           ? `${state.date} · ${index + 1}/${dates.length}`
-          : `${dates.length} selected dates`}
+          : `${dates.length} selected ${dates.length === 1 ? "date" : "dates"}`}
       </span>
       <Button
         className="playback-reset"

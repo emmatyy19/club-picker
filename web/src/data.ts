@@ -86,6 +86,29 @@ export const emptyFilters: Filters = {
   session: "",
   undated: false,
 };
+/** Select the latest distinct practice dates, keeping existing tag choices. */
+export function recentSessionFilters(
+  shots: Shot[],
+  filters: Filters,
+  count: number,
+): Filters {
+  if (!Number.isInteger(count) || count < 1)
+    throw new Error("Session count must be a positive integer.");
+  const dates = [
+    ...new Set(shots.flatMap((s) => (s.session_date ? [s.session_date] : []))),
+  ]
+    .sort()
+    .reverse()
+    .slice(0, count);
+  if (!dates.length) throw new Error("No dated sessions are available.");
+  return {
+    ...filters,
+    session: "",
+    undated: false,
+    start: dates.at(-1) ?? "",
+    end: dates[0] ?? "",
+  };
+}
 export const sessionKey = (s: Shot) => JSON.stringify([s.source, s.session_id]);
 export const shotKey = (s: Shot) =>
   JSON.stringify([

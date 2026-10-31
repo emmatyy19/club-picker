@@ -34,6 +34,7 @@ import { Trends } from "./TrendView";
 import { Rankings } from "./RankingView";
 import { trendMetrics, trendUnit, trendValue } from "./trends";
 import { Timeline } from "./Timeline";
+import { RecentSessions } from "./RecentSessions";
 import { Playback, useDatePlayback } from "./DatePlayback";
 import { playbackDates } from "./playback";
 import {
@@ -384,7 +385,9 @@ export function App() {
     : filters.undated
       ? "Undated sessions"
       : filters.start && filters.end
-        ? `${filters.start} to ${filters.end}`
+        ? filters.start === filters.end
+          ? filters.start
+          : `${filters.start} to ${filters.end}`
         : filters.start
           ? `From ${filters.start}`
           : filters.end
@@ -770,19 +773,28 @@ export function App() {
                       </span>
                     </Button>
                   </div>
-                  {(filters.tags.length > 0 ||
-                    filters.session ||
-                    filters.start ||
-                    filters.end) && (
-                    <Button
-                      className="clear-selection"
-                      variant="subtle"
-                      size="xs"
-                      onClick={() => setFilters(emptyFilters)}
-                    >
-                      Clear filters & dates
-                    </Button>
-                  )}
+                  <RecentSessions
+                    shots={all}
+                    filters={filters}
+                    onChange={setFilters}
+                  />
+                  <Button
+                    className="clear-selection"
+                    variant="subtle"
+                    size="xs"
+                    disabled={
+                      !(
+                        filters.tags.length ||
+                        filters.session ||
+                        filters.start ||
+                        filters.end ||
+                        filters.undated
+                      )
+                    }
+                    onClick={() => setFilters(emptyFilters)}
+                  >
+                    Clear filters & dates
+                  </Button>
                   {prefs.view !== "trends" && prefs.view !== "rankings" && (
                     <ChartTools playback={<Playback controller={playback} />}>
                       {chartSettings}

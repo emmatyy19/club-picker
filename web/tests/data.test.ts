@@ -15,6 +15,7 @@ import {
   groups,
   parseSnapshot,
   quantile,
+  recentSessionFilters,
   sessionKey,
   side,
   type Shot,
@@ -40,6 +41,56 @@ const rows = [
     session_id: "undated",
   },
 ];
+describe("Recent practice dates", () => {
+  it("does not turn an empty or undated library into an all-dates selection", () => {
+    expect(() => recentSessionFilters([], emptyFilters, 1)).toThrow();
+    expect(() =>
+      recentSessionFilters([{ ...shot, session_date: null }], emptyFilters, 1),
+    ).toThrow();
+  });
+  const history = [
+    ...rows,
+    {
+      ...shot,
+      session_id: "same-day-other-source",
+      source: "toptracer" as const,
+      session_date: "2026-02-01",
+    },
+    { ...shot, session_id: "middle", session_date: "2026-01-20" },
+  ];
+  it("uses calendar order, includes same-day sources, and excludes undated shots", () => {
+    const latest = recentSessionFilters(history, emptyFilters, 1);
+    expect([latest.start, latest.end]).toEqual(["2026-02-01", "2026-02-01"]);
+    expect(filterShots(history, latest)).toHaveLength(2);
+    const lastTwo = recentSessionFilters(
+      [...history].reverse(),
+      emptyFilters,
+      2,
+    );
+    expect([lastTwo.start, lastTwo.end]).toEqual(["2026-01-20", "2026-02-01"]);
+    expect(filterShots(history, lastTwo)).toHaveLength(3);
+  });
+  it("replaces date/session selection while preserving tags and match mode", () => {
+    const prior = {
+      ...emptyFilters,
+      session: sessionKey(shot),
+      undated: true,
+      mode: "any" as const,
+      tags: [{ field: "source" as const, value: "toptracer" }],
+    };
+    const next = recentSessionFilters(history, prior, 20);
+    expect(next).toEqual({
+      ...prior,
+      session: "",
+      undated: false,
+      start: "2026-01-01",
+      end: "2026-02-01",
+    });
+    expect(filterShots(history, next)).toHaveLength(1);
+    for (const n of [0, -1, 1.5, NaN])
+      expect(() => recentSessionFilters(history, prior, n)).toThrow();
+  });
+});
 describe("Snapshot boundary", () => {
   it("keeps missing separate from zero and converts units", () => {
     expect(distance(shot, "carry", "yd")).toBeCloseTo(140);
