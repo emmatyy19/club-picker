@@ -7,11 +7,13 @@ It does not need an account or a personal-data server.
 
 ## First setup, after the phone build is deployed
 
-1. On my computer, open the local app and choose **Data settings → Export backup**.
-   Process new provider sessions first; a report link, PDF, or screenshot is not
-   a prepared library file.
+1. On my computer, process new provider sessions, open the local app and choose
+   **Refresh data**. Check the library count, then choose **Data settings → Export
+   backup**. This exports the whole library, including shots hidden by filters.
+   A report link, PDF, or screenshot is not a prepared library file.
 2. Transfer that private JSON file to my phone using my preferred file-transfer
-   method. Keep a backup on my computer.
+   method, such as AirDrop or a private iCloud Drive folder. Save it in the
+   iPhone's Files app so the import picker can find it. Keep a backup on my computer.
 3. Open the hosted app online and add it to the home screen. On iPhone, use
    Safari's Share menu and **Add to Home Screen**, as described in
    [Apple's instructions](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios).

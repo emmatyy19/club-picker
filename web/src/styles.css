@@ -2862,3 +2862,26 @@ html {
     flex-basis: 92px;
   }
 }
+/* Frequently used date ranges stay beside the chart, even with Dates closed. */
+.recent-sessions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.recent-sessions-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+.recent-session-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 480px) {
+  .recent-sessions {
+    display: grid;
+    gap: 8px;
+  }
+}

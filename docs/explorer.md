@@ -57,6 +57,14 @@ Keep snapshots under ignored storage, outside `web/`, Git, and published assets.
 
 ## Everyday workflow
 
+Above the graph, **Latest session**, **Last 3**, and **Last 5** jump to recent
+practice dates. **Custom…** accepts another count; **All dates** clears the date
+selection. Each date counts once across sets and sources, and existing club and
+source filters still apply. Undated shots are excluded from recent selections.
+These shortcuts select a fixed date range; click again after adding new data
+to include the newest practice. The Dates panel still supports manual ranges
+and individual provider/set sessions.
+
 Put PDFs, screenshots, and report links in a new session folder under
 `data/raw/trackman/` or `data/raw/toptracer/`. These folders are ignored by Git.
 Confirm which physical club set you used when asking for extraction and review.
