@@ -248,7 +248,7 @@ export function overheadBounds(
   return { x: (y * width) / height / 2, y };
 }
 export function setColor(id: string): string {
-  return id === "set-a" ? "#347d6a" : id === "set-b" ? "#9875a4" : color(id);
+  return id === "set-a" ? "#52734d" : id === "set-b" ? "#99758e" : color(id);
 }
 export function groups(shots: Shot[], metric: Metric) {
   const map = new Map<string, Shot[]>();
@@ -302,14 +302,14 @@ export function ellipse(
   };
 }
 export const palette = [
-  "#347d6a",
-  "#bd7046",
-  "#627fb3",
-  "#9875a4",
-  "#a3943f",
-  "#5a929c",
-  "#b65e79",
-  "#637563",
+  "#5f8769",
+  "#aa806b",
+  "#768eac",
+  "#99758e",
+  "#96945e",
+  "#679395",
+  "#b27588",
+  "#6e7e65",
 ];
 export function color(value: string, domain?: string[]) {
   if (value === "set-a" || value === "set-b") return setColor(value);

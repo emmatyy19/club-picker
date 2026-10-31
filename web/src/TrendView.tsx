@@ -1,3 +1,5 @@
+import { ChartTools } from "./ChartTools";
+import { chartTheme, dateSliderStyle } from "./design/chartTheme";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Checkbox, Select, SegmentedControl, Table } from "@mantine/core";
 import * as echarts from "echarts/core";
@@ -50,6 +52,8 @@ export function Trends({
   separateGroups,
   onSeparateGroupsChange,
   playbackDate,
+  settings,
+  unitsControl,
   playbackControl,
   onPlaybackDatesChange,
 }: {
@@ -58,6 +62,8 @@ export function Trends({
   separateGroups: boolean;
   onSeparateGroupsChange: (separate: boolean) => void;
   playbackDate: string | null;
+  settings: ReactNode;
+  unitsControl: ReactNode;
   playbackControl: ReactNode;
   onPlaybackDatesChange: (dates: string[]) => void;
   shots: Shot[];
@@ -162,7 +168,46 @@ export function Trends({
       : 0;
   return (
     <>
+      <ChartTools playback={playbackControl}>
+        {settings}
+        <div className="settings-checkboxes">
+          <Checkbox
+            radius="xs"
+            size="xs"
+            label="Individual shots"
+            checked={individual}
+            disabled={metric === "spread"}
+            onChange={(e) => setIndividual(e.currentTarget.checked)}
+          />
+          <Checkbox
+            className="measurement-group-toggle"
+            radius="xs"
+            size="xs"
+            label="Separate measurement groups"
+            disabled={combine || contexts.length < 2}
+            checked={separateGroups}
+            onChange={(e) => onSeparateGroupsChange(e.currentTarget.checked)}
+          />
+        </div>
+        <details className="measurement-explanation">
+          <summary>About measurement groups</summary>
+          <p>
+            Normalization adjusts reported results to standard conditions, so
+            adjusted and unadjusted measurements can differ. Unknown means the
+            setting was not recorded. Separate groups keeps each setup apart;
+            combining describes your selected mixture.
+          </p>
+          {contexts.map(([key, row], i) => (
+            <p key={key}>
+              {i + 1}. {row.club_label} · {row.set_id} · {row.source}:
+              normalization {row.normalization}; {row.normalization_settings};
+              compensation {row.compensation}.
+            </p>
+          ))}
+        </details>
+      </ChartTools>
       <div className="plot-controls trend-controls">
+        {unitsControl}
         <Select
           size="xs"
           label="Trend metric"
@@ -191,31 +236,23 @@ export function Trends({
           checked={combine}
           onChange={(e) => onCombineChange(e.currentTarget.checked)}
         />
-        <div className="control-field">
-          <span className="control-label">Left/right at</span>
-          <SegmentedControl
-            size="xs"
-            disabled={!["side", "spread"].includes(metric)}
-            aria-label="Left/right position"
-            value={lateral}
-            onChange={(v) => onLateralChange(v as Metric)}
-            data={[
-              { value: "carry", label: "Landing" },
-              { value: "total", label: "Finishing" },
-            ]}
-          />
-        </div>
-        <Checkbox
-          className="control-checkbox"
-          radius="xs"
-          size="xs"
-          label="Individual shots"
-          checked={individual}
-          disabled={metric === "spread"}
-          onChange={(e) => setIndividual(e.currentTarget.checked)}
-        />
+        {["side", "spread"].includes(metric) && (
+          <div className="control-field">
+            <span className="control-label">Left/right at</span>
+            <SegmentedControl
+              size="xs"
+              disabled={!["side", "spread"].includes(metric)}
+              aria-label="Left/right position"
+              value={lateral}
+              onChange={(v) => onLateralChange(v as Metric)}
+              data={[
+                { value: "carry", label: "Landing" },
+                { value: "total", label: "Finishing" },
+              ]}
+            />
+          </div>
+        )}
       </div>
-      {playbackControl}
       <div className="availability trend-availability">
         <strong>
           {count} measured shots · {sessions.length}{" "}
@@ -308,40 +345,18 @@ export function Trends({
           One date shows a snapshot, not a change over time.
         </p>
       )}
-      <p className="chart-note">
-        Observed sessions. Ranges describe these shots, not uncertainty about
-        your next shot. Gaps have no estimated values.
-      </p>
-      {mode === "combined" && (
+      <details className="inline-help">
+        <summary>About this trend</summary>
         <p className="chart-note">
-          Each shot counts equally. Changing clubs or sources can change the
-          combined trend.
+          Observed sessions. Ranges describe these shots, not uncertainty about
+          your next shot. Gaps have no estimated values.
         </p>
-      )}
-      <details className="measurement-details">
-        <summary>Measurement details</summary>
-        <Checkbox
-          className="measurement-group-toggle"
-          radius="xs"
-          size="xs"
-          label="Separate measurement groups"
-          disabled={combine || contexts.length < 2}
-          checked={separateGroups}
-          onChange={(e) => onSeparateGroupsChange(e.currentTarget.checked)}
-        />
-        <p>
-          Normalization adjusts reported results to standard conditions, so
-          adjusted and unadjusted measurements can differ. Unknown means the
-          setting was not recorded. Separate groups keeps each setup apart;
-          combining describes your selected mixture.
-        </p>
-        {contexts.map(([key, row], i) => (
-          <p key={key}>
-            {i + 1}. {row.club_label} · {row.set_id} · {row.source}:
-            normalization {row.normalization}; {row.normalization_settings};
-            compensation {row.compensation}.
+        {mode === "combined" && (
+          <p className="chart-note">
+            Each shot counts equally. Changing clubs or sources can change the
+            combined trend.
           </p>
-        ))}
+        )}
       </details>
       {sessions.length > 0 && (
         <details>
@@ -409,7 +424,12 @@ function TrendChart({
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!host.current) return;
-    const chart = echarts.init(host.current);
+    // Hidden workspaces/accordions have no size yet. ResizeObserver supplies
+    // the visible dimensions when they open.
+    const chart = echarts.init(host.current, undefined, {
+      width: host.current.clientWidth || 1,
+      height: host.current.clientHeight || 1,
+    });
     const dates = sessions.map((s) => Date.parse(`${s.date}T00:00:00Z`));
     const raw = sessions.flatMap((s, i) =>
       s.shots.map((p) => ({ ...p, date: dates[i] })),
@@ -480,7 +500,7 @@ function TrendChart({
       type: "scatter",
       name: metric === "spread" ? "Session spread" : "Session median",
       symbolSize: 10,
-      itemStyle: { borderColor: "#fff", borderWidth: 1 },
+      itemStyle: { borderColor: "#fffdf7", borderWidth: 1 },
       data: sessions.map((s, i) => ({
         value: [dates[i], s.median],
         summary: s,
@@ -499,9 +519,10 @@ function TrendChart({
         : undefined,
     });
     chart.setOption({
+      ...chartTheme,
       animation: false,
       useUTC: true,
-      grid: { left: 60, right: 24, top: 35, bottom: 85 },
+      grid: { left: 60, right: 24, top: 35, bottom: 96 },
       xAxis: {
         type: "time",
         min: Math.min(...domainDates) - 86400000 * 7,
@@ -522,16 +543,14 @@ function TrendChart({
         axisLabel: {
           formatter: (value: number) => String(Number(value.toFixed(1))),
         },
-        splitLine: { lineStyle: { color: "#edf0ec" } },
+        splitLine: { lineStyle: { color: "#e5e6db" } },
       },
       dataZoom: [
         { type: "inside", filterMode: "none" },
         {
-          type: "slider",
-          bottom: 15,
-          height: 18,
-          filterMode: "none",
-          labelFormatter: (v: number) => new Date(v).toISOString().slice(0, 10),
+          ...dateSliderStyle,
+          left: 60,
+          right: 24,
         },
       ],
       tooltip: {
@@ -555,7 +574,12 @@ function TrendChart({
       const data = p.data as { shot?: Shot };
       if (data.shot) onSelect(shotKey(data.shot));
     });
-    const observer = new ResizeObserver(() => chart.resize());
+    const observer = new ResizeObserver(() =>
+      chart.resize({
+        width: host.current?.clientWidth || 1,
+        height: host.current?.clientHeight || 1,
+      }),
+    );
     observer.observe(host.current);
     return () => {
       observer.disconnect();

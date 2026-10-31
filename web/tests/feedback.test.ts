@@ -84,3 +84,19 @@ describe("private feedback", () => {
     ).toThrow();
   });
 });
+
+it("round-trips pooled plans while still accepting older single-context plans", () => {
+  for (const version of [
+    "finish-baseline-v1",
+    "finish-baseline-v2-pooled",
+  ] as const) {
+    const entry = makeFeedback(
+      { ...plan, version },
+      { id: "a7", label: "7 iron" },
+      "full",
+    );
+    expect(
+      parseFeedback(JSON.parse(serializeFeedback([entry])))[0].plan.version,
+    ).toBe(version);
+  }
+});

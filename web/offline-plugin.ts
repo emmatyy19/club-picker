@@ -20,14 +20,20 @@ export function offlinePlugin(): Plugin {
         start_url: "./",
         scope: "./",
         display: "standalone",
-        background_color: "#f5f7f3",
-        theme_color: "#3b785e",
+        background_color: "#f8f5ec",
+        theme_color: "#52734d",
         icons: [
           {
-            src: "bunny-caddie.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any",
+            src: "app-icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+          {
+            src: "app-icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
           },
         ],
       };
@@ -40,7 +46,7 @@ export function offlinePlugin(): Plugin {
         index,
         (await readFile(index, "utf8")).replace(
           "</head>",
-          '<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#3b785e"></head>',
+          '<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#52734d"></head>',
         ),
       );
       const files: string[] = [];

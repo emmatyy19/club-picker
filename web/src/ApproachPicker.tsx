@@ -1,3 +1,4 @@
+import { GolfIron } from "./design/GolfIron";
 import { useMemo, useState } from "react";
 import { Checkbox, NumberInput, SegmentedControl, Select } from "@mantine/core";
 import {
@@ -15,9 +16,9 @@ import type { Shot, Unit } from "./data";
 
 export function ApproachPicker({ shots }: { shots: Shot[] }) {
   const [set, setSet] = useState("");
-  const [context, setContext] = useState("");
+  const [source, setSource] = useState<Shot["source"] | "all">("all");
   const [untagged, setUntagged] = useState(true);
-  const [swing, setSwing] = useState("full");
+  const [swing, setSwing] = useState<"full" | "partial">("full");
   const [unit, setUnit] = useState<Unit>("yd");
   const [distance, setDistance] = useState<number | string>("");
   const [playsLike, setPlaysLike] = useState<number | string>("");
@@ -30,26 +31,31 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
     ...new Set(shots.filter(approachEligible).map((s) => s.set_id)),
   ].sort();
   const chosenSet = sets.includes(set) ? set : (sets[0] ?? "");
+  const chosenSource = source;
+  const selection = useMemo(
+    () => ({ source: chosenSource, swing, includeUnknown: untagged }),
+    [chosenSource, swing, untagged],
+  );
+  const profiles = useMemo(
+    () => approachProfiles(shots, chosenSet, selection),
+    [shots, chosenSet, selection],
+  );
   const contexts = useMemo(() => {
     const result = new Map<string, Shot>();
-    for (const s of shots)
+    for (const s of shots) {
       if (
         approachEligible(s) &&
         s.set_id === chosenSet &&
+        (chosenSource === "all" || s.source === chosenSource) &&
         (s.intent === swing ||
           (swing === "full" && untagged && s.intent === "unknown"))
       )
         result.set(approachContext(s), s);
-    return [...result.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [shots, chosenSet, untagged, swing]);
-  const chosenContext = contexts.some(([key]) => key === context)
-    ? context
-    : (contexts[0]?.[0] ?? "");
-  const sample = contexts.find(([key]) => key === chosenContext)?.[1];
-  const profiles = useMemo(
-    () => approachProfiles(shots, chosenSet, chosenContext),
-    [shots, chosenSet, chosenContext],
-  );
+    }
+    return [...result.entries()];
+  }, [shots, chosenSet, chosenSource, swing, untagged]);
+  const mixedConditions = profiles.some((p) => p.mixedConditions);
+  const assumedSwing = profiles.some((p) => p.assumedSwing);
   let target: number | null = null,
     error = "";
   if (distance !== "") {
@@ -106,139 +112,140 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
       className="panel approach-picker"
       aria-label="Approach shot picker"
     >
-      <div className="approach-heading">
-        <div>
-          <h2>Approach shots</h2>
-          <p className="muted">
-            Choose a set, enter a distance, and compare your clubs.
-          </p>
+      <div className="approach-form">
+        <div className="shot-input-group">
+          <h2 className="input-group-title">Your shot</h2>
+          <div className="approach-set-row">
+            <div className="approach-toggle-field">
+              <span className="approach-field-label">Club set</span>
+              <SegmentedControl
+                aria-label="Club set"
+                value={chosenSet}
+                onChange={(v) => {
+                  setSet(v);
+                  setSource("all");
+                }}
+                data={sets.map((value) => ({
+                  value,
+                  label: value.replace(
+                    /^set-([a-z])$/,
+                    (_, letter: string) => `Set ${letter.toUpperCase()}`,
+                  ),
+                }))}
+              />
+            </div>
+            <SegmentedControl
+              aria-label="Approach distance units"
+              value={unit}
+              onChange={(v) => changeUnits(v as Unit)}
+              data={["yd", "m"]}
+            />{" "}
+          </div>
+          <div className="approach-inputs">
+            <NumberInput
+              label={`Target distance (${unit})`}
+              placeholder="Enter distance"
+              value={distance}
+              onChange={setDistance}
+              min={0}
+              hideControls
+            />
+          </div>
+          <div className="approach-data">
+            <div className="approach-toggle-field">
+              <span className="approach-field-label">Swing</span>
+              <SegmentedControl
+                aria-label="Swing type"
+                value={swing}
+                onChange={(v) => {
+                  setSwing(v as "full" | "partial");
+                  setSource("all");
+                }}
+                data={[
+                  { value: "full", label: "Full swing" },
+                  { value: "partial", label: "Partial swing" },
+                ]}
+              />
+            </div>
+          </div>
         </div>
-        <SegmentedControl
-          aria-label="Approach distance units"
-          value={unit}
-          onChange={(v) => changeUnits(v as Unit)}
-          data={["yd", "m"]}
-        />
-      </div>
-      <div className="approach-set-row">
-        <div className="approach-toggle-field">
-          <span className="approach-field-label">Club set</span>
-          <SegmentedControl
-            aria-label="Club set"
-            value={chosenSet}
-            onChange={(v) => {
-              setSet(v);
-              setContext("");
-            }}
-            data={sets.map((value) => ({
-              value,
-              label: value.replace(
-                /^set-([a-z])$/,
-                (_, letter: string) => `Set ${letter.toUpperCase()}`,
-              ),
-            }))}
-          />
-        </div>
-      </div>
-      <div className="approach-inputs">
-        <NumberInput
-          label={`Finish near (${unit})`}
-          placeholder="Pin or finishing target"
-          value={distance}
-          onChange={setDistance}
-          min={0}
-          hideControls
-        />
-        <NumberInput
-          label={`Plays like (${unit}, optional)`}
-          placeholder="From your rangefinder"
-          value={playsLike}
-          onChange={setPlaysLike}
-          min={0}
-          hideControls
-        />
-        <NumberInput
-          label="Slope angle (°, optional)"
-          placeholder="+ uphill, − downhill"
-          value={angle}
-          onChange={setAngle}
-          min={-89.9}
-          max={89.9}
-          hideControls
-        />
-      </div>
-      <div className="approach-data">
-        <div className="approach-toggle-field">
-          <span className="approach-field-label">Swing</span>
-          <SegmentedControl
-            aria-label="Swing type"
-            value={swing}
-            onChange={(v) => {
-              setSwing(v);
-              setContext("");
-            }}
-            data={[
-              { value: "full", label: "Full swing" },
-              { value: "partial", label: "Partial swing" },
-            ]}
-          />
-        </div>
-        {contexts.length > 1 && (
-          <Select
-            label="Practice data"
-            value={chosenContext}
-            allowDeselect={false}
-            onChange={(v) => setContext(v ?? "")}
-            data={contexts.map(([key, s], i) => ({
-              value: key,
-              label: `${s.source === "manual" ? "Manual" : s.source === "trackman" ? "Trackman" : "Toptracer"} · ${s.intent === "unknown" ? "swing assumed" : s.intent === "partial" ? "partial swings" : "full swings"}${contexts.filter(([, other]) => other.source === s.source && other.intent === s.intent).length > 1 ? ` · settings ${i + 1}` : ""}`,
-            }))}
-          />
-        )}
-      </div>
-      <div className="approach-window">
-        <NumberInput
-          className="must-carry-input"
-          label={`Must carry (${unit}, optional)`}
-          description="Distance beyond water, a bunker, or another obstacle."
-          placeholder="Far edge of obstacle"
-          value={mustCarry}
-          onChange={setMustCarry}
-          min={0}
-          hideControls
-        />
-        <Checkbox
-          label="Add a landing area"
-          checked={useWindow}
-          onChange={(e) => setUseWindow(e.currentTarget.checked)}
-        />
-        {useWindow && (
-          <>
+        <div className="conditions-input-group">
+          <h2 className="input-group-title">
+            Course conditions <span>Optional</span>
+          </h2>
+          <div className="approach-window">
+            <NumberInput
+              className="must-carry-input"
+              label={`Must carry (${unit}, optional)`}
+              description="Distance beyond water, a bunker, or another obstacle."
+              placeholder="Far edge of obstacle"
+              value={mustCarry}
+              onChange={setMustCarry}
+              min={0}
+              hideControls
+            />
+          </div>
+          <details className="approach-context slope-settings">
+            <summary>
+              Slope & landing area
+              {playsLike !== "" || angle !== "" || useWindow
+                ? " · applied"
+                : ""}
+            </summary>
             <div className="approach-window-inputs">
+              {" "}
               <NumberInput
-                label={`Landing area front (${unit})`}
-                placeholder="Near edge"
-                value={front}
-                onChange={setFront}
+                label={`Plays like (${unit}, optional)`}
+                placeholder="From your rangefinder"
+                value={playsLike}
+                onChange={setPlaysLike}
                 min={0}
                 hideControls
               />
               <NumberInput
-                label={`Landing area back (${unit})`}
-                placeholder="Far edge"
-                value={back}
-                onChange={setBack}
-                min={0}
+                label="Slope angle (°, optional)"
+                placeholder="+ uphill, − downhill"
+                value={angle}
+                onChange={setAngle}
+                min={-89.9}
+                max={89.9}
                 hideControls
               />
             </div>
-            <p className="muted small">
-              Use level-ground carry distances, or plays-like distances for both
-              edges on a slope. The target’s slope adjustment is not applied to
-              these fields.
-            </p>
-          </>
-        )}
+            <Checkbox
+              label="Add a landing area"
+              checked={useWindow}
+              onChange={(e) => setUseWindow(e.currentTarget.checked)}
+            />
+            {useWindow && (
+              <>
+                <div className="approach-window-inputs">
+                  <NumberInput
+                    label={`Landing area front (${unit})`}
+                    placeholder="Near edge"
+                    value={front}
+                    onChange={setFront}
+                    min={0}
+                    hideControls
+                  />
+                  <NumberInput
+                    label={`Landing area back (${unit})`}
+                    placeholder="Far edge"
+                    value={back}
+                    onChange={setBack}
+                    min={0}
+                    hideControls
+                  />
+                </div>
+                <p className="muted small">
+                  Use level-ground carry distances, or plays-like distances for
+                  both edges on a slope. The target’s slope adjustment is not
+                  applied to these fields.
+                </p>
+              </>
+            )}
+          </details>
+        </div>
       </div>
       <div className="approach-results" aria-live="polite">
         {error ? (
@@ -250,8 +257,8 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
         ) : !ranked.length ? (
           <p className="muted">
             {swing === "partial"
-              ? "No labeled partial swings in this set yet. Add a practice session with a repeatable partial swing, such as a three-quarter swing, before using it for recommendations."
-              : "No matching full-swing data. In Practice settings below, include shots with unknown swing intent to use your imported history."}
+              ? "No labeled partial swings for this selection. Try All sources or add practice with a repeatable partial swing."
+              : "No matching full-swing data. Try All sources or include shots with unknown swing intent in Practice settings."}
           </p>
         ) : (
           <>
@@ -303,11 +310,12 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
                             : "Carry evidence only"
                       : "Alternative"}
                   </span>
+                  {i === 0 && <GolfIron className="recommendation-art" />}
                   <h3>{p.club.club_label}</h3>
                   <p className="approach-swing">
-                    {p.club.intent === "partial"
+                    {swing === "partial"
                       ? "Partial swing · recorded practice"
-                      : p.club.intent === "full"
+                      : !p.assumedSwing
                         ? "Full swing"
                         : "Full swing · assumed"}
                   </p>
@@ -347,10 +355,7 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
                       obstacle.
                     </p>
                   )}
-                  <p className="muted small">
-                    Reported total includes provider bounce and roll
-                    assumptions, not today’s ground conditions.
-                  </p>
+
                   {p.outcomes && (
                     <div className="carry-window-results">
                       <div className="carry-window-bar" aria-hidden="true">
@@ -380,94 +385,113 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
                       </div>
                     </div>
                   )}
-                  <dl>
-                    <div>
-                      <dt>Middle 80% carry</dt>
-                      <dd>
-                        {show(p.low)}–{show(p.high)} {unit}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Reported total support</dt>
-                      <dd>
-                        {p.total
-                          ? `${p.total.shots} shots · ${p.total.sessions} ${p.total.sessions === 1 ? "session" : "sessions"}`
-                          : "No data"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Carry history</dt>
-                      <dd>
-                        {p.history.dates} practice{" "}
-                        {p.history.dates === 1 ? "date" : "dates"} · {p.shots}{" "}
-                        shots
-                        {p.history.undatedShots > 0 &&
-                          ` (${p.history.undatedShots} undated)`}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Latest practice</dt>
-                      <dd>{p.latest ?? "Date unknown"}</dd>
-                    </div>
-                  </dl>
-                  <div className="approach-history">
-                    {(p.history.dates < 5 || p.shots < 20) && (
-                      <span className="history-badge">Limited history</span>
-                    )}
-                    {p.history.comparison ? (
-                      <>
-                        <div className="approach-history-values">
-                          <div>
-                            <span>Recent carry</span>
-                            <strong>
-                              {show(p.history.comparison.recent.median)} {unit}
-                            </strong>
-                            <small>
-                              Latest 3 dates ·{" "}
-                              {p.history.comparison.recent.shots} shots
-                            </small>
+                  <p className="muted small">
+                    Middle 80% carry: {show(p.low)}–{show(p.high)} {unit}
+                    <br />
+                    {p.shots} shots · {p.history.dates} practice{" "}
+                    {p.history.dates === 1 ? "date" : "dates"}
+                  </p>
+                  {(p.history.dates < 5 || p.shots < 20) && (
+                    <span className="history-badge">Limited history</span>
+                  )}
+                  <details className="recommendation-details">
+                    <summary>Practice history</summary>
+                    <dl>
+                      <div>
+                        <dt>Middle 80% carry</dt>
+                        <dd>
+                          {show(p.low)}–{show(p.high)} {unit}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Reported total support</dt>
+                        <dd>
+                          {p.total
+                            ? `${p.total.shots} shots · ${p.total.sessions} ${p.total.sessions === 1 ? "session" : "sessions"}`
+                            : "No data"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Carry history</dt>
+                        <dd>
+                          {p.history.dates} practice{" "}
+                          {p.history.dates === 1 ? "date" : "dates"} · {p.shots}{" "}
+                          shots
+                          {p.history.undatedShots > 0 &&
+                            ` (${p.history.undatedShots} undated)`}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Latest practice</dt>
+                        <dd>{p.latest ?? "Date unknown"}</dd>
+                      </div>
+                    </dl>
+                    <div className="approach-history">
+                      {p.history.comparison ? (
+                        <>
+                          <div className="approach-history-values">
+                            <div>
+                              <span>Recent carry</span>
+                              <strong>
+                                {show(p.history.comparison.recent.median)}{" "}
+                                {unit}
+                              </strong>
+                              <small>
+                                Latest 3 dates ·{" "}
+                                {p.history.comparison.recent.shots} shots
+                              </small>
+                            </div>
+                            <div>
+                              <span>Earlier carry</span>
+                              <strong>
+                                {show(p.history.comparison.earlier.median)}{" "}
+                                {unit}
+                              </strong>
+                              <small>
+                                {p.history.comparison.earlier.sessions} earlier
+                                dates · {p.history.comparison.earlier.shots}{" "}
+                                shots
+                              </small>
+                            </div>
                           </div>
-                          <div>
-                            <span>Earlier carry</span>
-                            <strong>
-                              {show(p.history.comparison.earlier.median)} {unit}
-                            </strong>
-                            <small>
-                              {p.history.comparison.earlier.sessions} earlier
-                              dates · {p.history.comparison.earlier.shots} shots
-                            </small>
-                          </div>
-                        </div>
+                          <p className="muted small">
+                            {Math.abs(
+                              (p.history.comparison.recent.median -
+                                p.history.comparison.earlier.median) /
+                                scale,
+                            ) < 0.05
+                              ? "Recent carry is unchanged."
+                              : `Recent carry is ${show(Math.abs(p.history.comparison.recent.median - p.history.comparison.earlier.median))} ${unit} ${p.history.comparison.recent.median > p.history.comparison.earlier.median ? "longer" : "shorter"}.`}{" "}
+                            Recorded change, not a forecast.
+                          </p>
+                        </>
+                      ) : (
                         <p className="muted small">
-                          {Math.abs(
-                            (p.history.comparison.recent.median -
-                              p.history.comparison.earlier.median) /
-                              scale,
-                          ) < 0.05
-                            ? "Recent carry is unchanged."
-                            : `Recent carry is ${show(Math.abs(p.history.comparison.recent.median - p.history.comparison.earlier.median))} ${unit} ${p.history.comparison.recent.median > p.history.comparison.earlier.median ? "longer" : "shorter"}.`}{" "}
-                          Recorded change, not a forecast.
+                          Recent comparison needs 5 dated practice days: 3
+                          recent and at least 2 earlier.
                         </p>
-                      </>
-                    ) : (
-                      <p className="muted small">
-                        Recent comparison needs 5 dated practice days: 3 recent
-                        and at least 2 earlier.
-                      </p>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  </details>
                 </article>
               ))}
             </div>
-            <p className="muted small">
-              Observed carry ranges, not a prediction of your next shot.
-              Sessions have equal weight.{" "}
-              {sample?.intent === "unknown" &&
-                "Full swing is assumed for unlabeled practice shots. Their original labels are unchanged."}
-            </p>
+            <details className="inline-help">
+              <summary>About these estimates</summary>
+              <p className="muted small">
+                Reported total uses provider roll assumptions, not today’s
+                ground conditions. Observed carry ranges, not a prediction of
+                your next shot. Sessions have equal weight.{" "}
+                {mixedConditions &&
+                  "Mixed practice conditions: providers and settings may shift distances. Combined history is not a calibrated next-shot prediction. "}
+                {assumedSwing &&
+                  "Full swing is assumed for unlabeled practice shots. Their original labels are unchanged."}
+              </p>
+            </details>
           </>
         )}
       </div>
+
       <FeedbackLog
         key={
           shots.every((s) => s.shot_id.startsWith("synthetic-"))
@@ -490,9 +514,12 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
         plan={
           ranked[0] && target !== null
             ? {
-                version: "finish-baseline-v1",
+                version: "finish-baseline-v2-pooled",
                 set: chosenSet,
-                context: chosenContext,
+                context: JSON.stringify({
+                  ...selection,
+                  measurementGroups: contexts.map(([key]) => key),
+                }),
                 targetM: target,
                 measuredM: Number(distance) * scale,
                 playsLikeM: playsLike === "" ? null : Number(playsLike) * scale,
@@ -503,7 +530,7 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
                   id: ranked[0].club.club_id,
                   label: ranked[0].club.club_label,
                 },
-                intent: ranked[0].club.intent as "full" | "partial" | "unknown",
+                intent: ranked[0].assumedSwing ? "unknown" : swing,
                 carryM: ranked[0].median,
                 totalM: ranked[0].total?.median ?? null,
                 lowM: ranked[0].low,
@@ -518,18 +545,40 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
       />
       <details className="approach-context">
         <summary>
-          Practice settings{sample ? ` · ${sample.source}` : ""}
+          Practice settings ·{" "}
+          {chosenSource === "all" ? "all sources" : chosenSource}
         </summary>
+        <Select
+          label="Practice data"
+          value={chosenSource}
+          allowDeselect={false}
+          onChange={(v) => setSource((v ?? "all") as Shot["source"] | "all")}
+          data={[
+            { value: "all", label: "All sources" },
+            { value: "trackman", label: "Trackman" },
+            { value: "toptracer", label: "Toptracer" },
+            ...(shots.some((s) => s.source === "manual")
+              ? [{ value: "manual", label: "Manual" }]
+              : []),
+          ]}
+        />
         <Checkbox
           label="Include shots with unknown swing intent"
           description="Used as full-swing practice. Turn off if your untagged history includes deliberate partial swings."
           checked={untagged}
           onChange={(e) => {
             setUntagged(e.currentTarget.checked);
-            setContext("");
+            setSource("all");
           }}
         />
-        {sample && <MeasurementContext shot={sample} />}
+        {contexts.length > 0 && (
+          <details>
+            <summary>Measurement details</summary>
+            {contexts.map(([key, shot]) => (
+              <MeasurementContext key={key} shot={shot} />
+            ))}
+          </details>
+        )}
       </details>
       <details className="approach-context">
         <summary>How this suggestion works</summary>
@@ -539,9 +588,10 @@ export function ApproachPicker({ shots }: { shots: Shot[] }) {
           take priority. Otherwise, supplied clearance comes first. Reported
           finish breaks ties. This explicit ordering does not optimize a
           combined hazard cost. A club can clear more often yet finish too long;
-          compare all three results. Sets and practice settings stay separate.
-          All usable shots, including mishits, contribute. Explorer filters do
-          not change this comparison.
+          compare all three results. Physical clubs and swing types stay
+          separate. All sources are combined by default within the selected set;
+          Practice settings can limit the source. All usable shots, including
+          mishits, contribute. Explorer filters do not change this comparison.
         </p>
         <p>
           A plays-like distance replaces the finish reference for comparison; it

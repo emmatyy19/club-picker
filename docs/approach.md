@@ -96,3 +96,18 @@ I will evaluate predictions on later sessions, including interval coverage and
 miss rates. Scenario comparisons can reveal tradeoffs, but cannot demonstrate
 lower scores or tell me what would have happened with an unplayed club. Actual
 course feedback will be needed for that.
+
+## Combining practice sources
+
+The picker now starts with all sources for the chosen club set. Each physical
+club stays separate, and recorded partial swings never join full-swing history.
+Untagged shots can join full swings with the existing opt-in setting, enabled
+by default. Practice settings can restrict the comparison to one source.
+
+Sessions retain equal weight. Pooling does not normalize provider conditions
+or recalibrate rollout. The explanation flags mixed conditions within a club;
+source-specific estimates remain available because they can differ materially.
+This is a usability change, not evidence of improved prediction accuracy. The
+previous single-context evaluation does not validate the pooled default.
+Saved plans identify the pooled baseline version and its selected measurement
+groups; older saved plans remain readable.

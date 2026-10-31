@@ -251,3 +251,76 @@ it("compares separate date-balanced windows, merging same-day sessions and exclu
       .comparison,
   ).toBeNull();
 });
+
+it("pools sources by physical club with equal session weights, preserving intent and quality boundaries", () => {
+  const rows = [
+    ...Array.from({ length: 9 }, (_, i) => ({
+      ...shot,
+      source: "trackman" as const,
+      shot_id: `tm-${i}`,
+      carry_m: 100,
+      total_m: 110,
+    })),
+    {
+      ...shot,
+      source: "toptracer" as const,
+      normalization: "unknown" as const,
+      shot_id: "tt",
+      carry_m: 140,
+      total_m: 150,
+    },
+    { ...shot, set_id: "b", club_id: "b-7", carry_m: 999 },
+    { ...shot, intent: "partial" as const, carry_m: 20 },
+    { ...shot, quality: "excluded" as const, carry_m: 999 },
+  ];
+  const selection = {
+    source: "all" as const,
+    swing: "full" as const,
+    includeUnknown: false,
+  };
+  const pooled = approachProfiles(rows, "a", selection);
+  expect(pooled).toHaveLength(1);
+  expect(pooled[0]).toMatchObject({
+    shots: 10,
+    sessions: 2,
+    median: 120,
+    mixedConditions: true,
+    assumedSwing: false,
+  });
+  expect(pooled[0].total?.median).toBe(130);
+  expect(
+    approachProfiles(rows, "a", { ...selection, source: "trackman" })[0].median,
+  ).toBe(100);
+  expect(
+    approachProfiles(rows, "a", { ...selection, source: "toptracer" })[0]
+      .median,
+  ).toBe(140);
+});
+
+it("includes untagged full-swing practice only when enabled and never mixes it into partial swings", () => {
+  const rows = [
+    shot,
+    { ...shot, shot_id: "unknown", intent: "unknown" as const },
+    { ...shot, shot_id: "partial", intent: "partial" as const },
+  ];
+  const selection = {
+    source: "all" as const,
+    swing: "full" as const,
+    includeUnknown: true,
+  };
+  expect(approachProfiles(rows, "a", selection)[0]).toMatchObject({
+    shots: 2,
+    assumedSwing: true,
+    mixedConditions: false,
+  });
+  expect(
+    approachProfiles(rows, "a", { ...selection, includeUnknown: false })[0]
+      .shots,
+  ).toBe(1);
+  expect(
+    approachProfiles(rows, "a", { ...selection, swing: "partial" })[0],
+  ).toMatchObject({ shots: 1, assumedSwing: false });
+  expect(
+    approachProfiles(rows, "a", { ...selection, source: "toptracer" }),
+  ).toEqual([]);
+});

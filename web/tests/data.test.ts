@@ -237,7 +237,7 @@ describe("Explorer display membership and order", () => {
   });
   it("assigns set badges their own distinct colors", () => {
     expect(setColor("set-a")).not.toBe(setColor("set-b"));
-    expect(setColor("set-a")).toBe("#347d6a");
+    expect(setColor("set-a")).toBe("#52734d");
     expect(color("set-b", ["set-a", "set-b"])).toBe(setColor("set-b"));
   });
 });

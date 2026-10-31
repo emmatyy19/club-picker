@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChartTools } from "./ChartTools";
+import { ViewIcon } from "./design/Icons";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Accordion,
   Alert,
@@ -6,13 +15,16 @@ import {
   Button,
   Checkbox,
   FileButton,
+  Drawer,
   Group,
   Modal,
   SegmentedControl,
   Select,
   Table,
   TextInput,
+  Tooltip,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { OfflineStatus } from "./OfflineStatus";
 import { ApproachPicker } from "./ApproachPicker";
 import { ShotChart } from "./Chart";
@@ -132,12 +144,42 @@ export function App() {
     [notice, setNotice] = useState(""),
     [persistent, setPersistent] = useState(true);
   const [prefs, setPrefs] = useState(preferences),
-    [filters, setFilters] = useState<Filters>(emptyFilters),
+    [filters, commitFilters] = useState<Filters>(emptyFilters),
     [selected, setSelected] = useState("");
+  const filterAnchor = useRef<{ element: Element; top: number } | null>(null);
+  const filterInteraction = useRef<Element | null>(null);
+  const setFilters = (next: Filters) => {
+    const active = filterInteraction.current ?? document.activeElement;
+    filterInteraction.current = null;
+    const panel = active?.closest(".selection-panels");
+    const element = panel ? active : null;
+    filterAnchor.current = element
+      ? { element, top: element.getBoundingClientRect().top }
+      : null;
+    commitFilters(next);
+  };
+  useLayoutEffect(() => {
+    const anchor = filterAnchor.current;
+    filterAnchor.current = null;
+    if (!anchor?.element.isConnected) return;
+    // Results above the filters can grow or shrink. Keep the edited control
+    // at its original screen position instead of moving it with those results.
+    const restore = () => {
+      if (!anchor.element.isConnected) return;
+      const offset = anchor.element.getBoundingClientRect().top - anchor.top;
+      if (Math.abs(offset) > 0.5)
+        window.scrollBy({ top: offset, behavior: "instant" });
+    };
+    restore();
+    // Chart children finish their own layout after the parent commit.
+    const frame = requestAnimationFrame(restore);
+    return () => cancelAnimationFrame(frame);
+  }, [filters]);
   const [confirmed, setConfirmed] = useState(false),
     [setNames, setSetNames] = useState<Record<string, string>>({});
   const [page, setPage] = useState(0),
     [savedView, setSavedView] = useState<Filters | null>(null);
+  const compactScreen = useMediaQuery("(max-width: 760px)");
   const [workspace, setWorkspace] = useState("shots");
   const [details, setDetails] = useState(false);
   const [selectionPanels, setSelectionPanels] = useState<string[]>([]);
@@ -274,6 +316,10 @@ export function App() {
   }, [prefs]);
   useEffect(() => setPage(0), [filters, library]);
   const all = library?.shots ?? [];
+  const shotNumbers = useMemo(
+    () => new Map(all.map((shot, index) => [shotKey(shot), index + 1])),
+    [all],
+  );
   const filtered = useMemo(() => filterShots(all, filters), [all, filters]);
   const baseDates = useMemo(
     () =>
@@ -409,17 +455,83 @@ export function App() {
       setError("Could not save these filters.");
     }
   };
+  const chartUnits = (
+    <div className="control-field graph-units">
+      <span className="control-label">Units</span>
+      <SegmentedControl
+        size="sm"
+        aria-label="Distance units"
+        value={prefs.unit}
+        onChange={(v) => updatePrefs({ unit: v as Unit })}
+        data={["yd", "m"]}
+      />
+    </div>
+  );
+  const chartSettings = (
+    <div className="plot-controls">
+      <Select
+        label="Playback speed"
+        size="xs"
+        value={playback.speed}
+        onChange={(value) => value && playback.setSpeed(value)}
+        data={[
+          { value: "1000", label: "1 second" },
+          { value: "2000", label: "2 seconds" },
+          { value: "4000", label: "4 seconds" },
+        ]}
+      />{" "}
+      <Select
+        label="Color by"
+        size="xs"
+        value={prefs.colorBy}
+        data={dimensions.map((d) => ({
+          value: d.field,
+          label: d.label,
+        }))}
+        onChange={(v) => v && updatePrefs({ colorBy: v as Dimension })}
+      />
+      {(prefs.view === "dispersion" || prefs.view === "overhead") && (
+        <Select
+          label="Observed ellipse"
+          size="xs"
+          value={prefs.coverage}
+          onChange={(v) => v && updatePrefs({ coverage: v })}
+          data={[
+            { value: "0.8", label: "80% of shots" },
+            { value: "0.5", label: "50% of shots" },
+            { value: "0", label: "Off" },
+          ]}
+        />
+      )}
+    </div>
+  );
   return (
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
           <img
             className="brand-logo"
-            src={`${import.meta.env.BASE_URL}bunny-caddie.svg`}
+            src={`${import.meta.env.BASE_URL}app-icon-512.png`}
             alt="Bunny caddie"
           />{" "}
-          my caddie
+          <span>
+            my caddie<span className="brand-dot">.</span>
+          </span>
         </div>
+        <SegmentedControl
+          className="workspace-tabs"
+          aria-label="Workspace"
+          size="md"
+          value={workspace}
+          onChange={(value) => {
+            playback.dispatch({ type: "pause" });
+            setWorkspace(value);
+          }}
+          data={[
+            { label: "My Shots", value: "shots" },
+            { label: "Approach picker", value: "approach" },
+          ]}
+        />
         <span className="local-label">
           <i />{" "}
           {phone
@@ -434,12 +546,22 @@ export function App() {
       <main>
         {phone && <OfflineStatus compact />}
         <div className="page-heading">
-          <div>
+          <div className="page-title-group">
             <h1>{workspace === "shots" ? "My Shots" : "Approach picker"}</h1>
+            {workspace === "approach" && (
+              <img
+                className="page-caddie"
+                src={`${import.meta.env.BASE_URL}illustrations/bunny-club-cutout.png`}
+                alt=""
+                width="120"
+                height="120"
+              />
+            )}
           </div>
           <Group gap="sm">
             {import.meta.env.DEV && !showcase && !phone && (
               <Button
+                variant="default"
                 loading={refreshing}
                 disabled={!ready}
                 onClick={() => void refreshData()}
@@ -487,6 +609,13 @@ export function App() {
           <section className="panel empty">Opening your local library…</section>
         ) : !library ? (
           <section className="panel empty">
+            <img
+              className="caddie-empty-art"
+              src={`${import.meta.env.BASE_URL}illustrations/bunny-ball.png`}
+              alt=""
+              width="96"
+              height="96"
+            />
             <h2>No shots yet</h2>
             <p>
               Add PDFs, screenshots, or report links to data/raw, then have the
@@ -519,64 +648,66 @@ export function App() {
                 <span>physical clubs</span>
               </div>
               <div className="inventory-note">
-                <span className="status-dot" />
-                <span>
-                  {librarySource === "repo"
-                    ? showcase
-                      ? "Synthetic data"
-                      : "From your repo"
-                    : persistent
-                      ? "Browser backup"
-                      : "Temporary browser copy"}
-                  <small>
+                <Tooltip
+                  label={
+                    librarySource === "repo"
+                      ? showcase || (phone && !personalDevice)
+                        ? "Invented shots for exploring the app."
+                        : "Reviewed repo data. Refresh after processing new sessions."
+                      : persistent
+                        ? "Saved in this browser on this device."
+                        : "Temporary copy. Export a backup to keep it."
+                  }
+                  events={{ hover: true, focus: true, touch: true }}
+                  multiline
+                  w={240}
+                  withArrow
+                >
+                  <span className="library-status" tabIndex={0}>
+                    <i className="status-dot" aria-hidden="true" />
                     {librarySource === "repo"
-                      ? showcase
-                        ? "Illustration, not actual sessions."
-                        : "Refresh after processing new sessions."
-                      : phone
-                        ? "Saved on this device only."
-                        : "Repo files are unchanged."}
-                  </small>
-                </span>
+                      ? showcase || (phone && !personalDevice)
+                        ? "Demo data"
+                        : "Repo library"
+                      : persistent
+                        ? "On this device"
+                        : "Temporary copy"}
+                  </span>
+                </Tooltip>
               </div>
             </div>
-            <SegmentedControl
-              className="workspace-tabs"
-              aria-label="Workspace"
-              size="md"
-              value={workspace}
-              onChange={(value) => {
-                playback.dispatch({ type: "pause" });
-                setWorkspace(value);
-              }}
-              data={[
-                { label: "My Shots", value: "shots" },
-                { label: "Approach picker", value: "approach" },
-              ]}
-            />
             <div hidden={workspace !== "approach"}>
               <ApproachPicker shots={all} />
             </div>
             <div hidden={workspace !== "shots"}>
               <div className="explorer-grid" id="shot-visualization">
                 <section className="panel plot-panel">
-                  <SegmentedControl
+                  <div
                     className="chart-view-tabs"
-                    fullWidth
-                    size="md"
+                    role="group"
                     aria-label="Chart view"
-                    value={prefs.view}
-                    onChange={(v) =>
-                      updatePrefs({ view: v as Preferences["view"] })
-                    }
-                    data={[
-                      { label: "Stats chart", value: "dispersion" },
-                      { label: "Overhead", value: "overhead" },
-                      { label: "Distances", value: "distance" },
-                      { label: "Trends", value: "trends" },
-                      { label: "Rankings", value: "rankings" },
-                    ]}
-                  />
+                  >
+                    {(
+                      [
+                        { label: "Stats chart", value: "dispersion" },
+                        { label: "Overhead", value: "overhead" },
+                        { label: "Distances", value: "distance" },
+                        { label: "Trends", value: "trends" },
+                        { label: "Rankings", value: "rankings" },
+                      ] as const
+                    ).map(({ label, value }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className="chart-view-button"
+                        aria-pressed={prefs.view === value}
+                        onClick={() => updatePrefs({ view: value })}
+                      >
+                        <ViewIcon name={value} />
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
                   <div
                     className="selection-shortcuts"
                     aria-label="Current shot selection"
@@ -591,9 +722,23 @@ export function App() {
                       title={filterExpression(filters)}
                       onClick={() => revealSelection("filters")}
                     >
-                      <span className="shortcut-label">Filters</span>
-                      <span className="shortcut-value">{filterSummary}</span>
-                      <span aria-hidden="true">↓</span>
+                      <svg
+                        className="shortcut-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        aria-hidden="true"
+                      >
+                        <path d="M4 7h16M7 12h10M10 17h4" />
+                      </svg>
+                      <span className="shortcut-copy">
+                        <span className="shortcut-label">Filters</span>
+                        <span className="shortcut-value">{filterSummary}</span>
+                      </span>
+                      <span className="shortcut-chevron" aria-hidden="true">
+                        ⌄
+                      </span>
                     </Button>
                     <Button
                       className="selection-shortcut"
@@ -605,17 +750,53 @@ export function App() {
                       title={dateSummary}
                       onClick={() => revealSelection("dates")}
                     >
-                      <span className="shortcut-label">Dates</span>
-                      <span className="shortcut-value">{dateSummary}</span>
-                      <span aria-hidden="true">↓</span>
+                      <svg
+                        className="shortcut-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        aria-hidden="true"
+                      >
+                        <rect x="4" y="5" width="16" height="15" rx="3" />
+                        <path d="M8 3v4m8-4v4M4 10h16" />
+                      </svg>
+                      <span className="shortcut-copy">
+                        <span className="shortcut-label">Dates</span>
+                        <span className="shortcut-value">{dateSummary}</span>
+                      </span>
+                      <span className="shortcut-chevron" aria-hidden="true">
+                        ⌄
+                      </span>
                     </Button>
                   </div>
+                  {(filters.tags.length > 0 ||
+                    filters.session ||
+                    filters.start ||
+                    filters.end) && (
+                    <Button
+                      className="clear-selection"
+                      variant="subtle"
+                      size="xs"
+                      onClick={() => setFilters(emptyFilters)}
+                    >
+                      Clear filters & dates
+                    </Button>
+                  )}
+                  {prefs.view !== "trends" && prefs.view !== "rankings" && (
+                    <ChartTools playback={<Playback controller={playback} />}>
+                      {chartSettings}
+                    </ChartTools>
+                  )}
                   <div className="plot-controls chart-options">
+                    {prefs.view !== "trends" &&
+                      prefs.view !== "rankings" &&
+                      chartUnits}
                     {prefs.view !== "trends" && prefs.view !== "rankings" && (
                       <div className="control-field">
                         <span className="control-label">Distance</span>
                         <SegmentedControl
-                          size="xs"
+                          size="sm"
                           aria-label="Distance metric"
                           value={prefs.metric}
                           onChange={(v) => updatePrefs({ metric: v as Metric })}
@@ -626,18 +807,6 @@ export function App() {
                         />
                       </div>
                     )}
-                    <Select
-                      label="Color by"
-                      size="xs"
-                      value={prefs.colorBy}
-                      data={dimensions.map((d) => ({
-                        value: d.field,
-                        label: d.label,
-                      }))}
-                      onChange={(v) =>
-                        v && updatePrefs({ colorBy: v as Dimension })
-                      }
-                    />
                     {(prefs.view === "dispersion" ||
                       prefs.view === "overhead") && (
                       <>
@@ -655,35 +824,14 @@ export function App() {
                             })
                           }
                         />
-                        <Select
-                          label="Observed ellipse"
-                          size="xs"
-                          value={prefs.coverage}
-                          onChange={(v) => v && updatePrefs({ coverage: v })}
-                          data={[
-                            { value: "0.8", label: "80% of shots" },
-                            { value: "0.5", label: "50% of shots" },
-                            { value: "0", label: "Off" },
-                          ]}
-                        />
                       </>
                     )}
-                    <div className="control-field">
-                      <span className="control-label">Units</span>
-                      <SegmentedControl
-                        size="xs"
-                        aria-label="Distance units"
-                        value={prefs.unit}
-                        onChange={(v) => updatePrefs({ unit: v as Unit })}
-                        data={["yd", "m"]}
-                      />
-                    </div>
                   </div>
-                  {prefs.view !== "trends" && (
-                    <Playback controller={playback} />
-                  )}
                   {prefs.view === "rankings" ? (
                     <Rankings
+                      settings={chartSettings}
+                      unitsControl={chartUnits}
+                      playbackControl={<Playback controller={playback} />}
                       shots={matched}
                       all={all}
                       unit={prefs.unit}
@@ -696,6 +844,8 @@ export function App() {
                       shots={filtered}
                       playbackDate={playbackDate}
                       onPlaybackDatesChange={updateTrendDates}
+                      settings={chartSettings}
+                      unitsControl={chartUnits}
                       playbackControl={<Playback controller={playback} />}
                       combine={prefs.trendCombine}
                       onCombineChange={(trendCombine) =>
@@ -754,13 +904,16 @@ export function App() {
                           </span>
                         )}
                       </div>
-                      <p className="muted small">
-                        {prefs.view === "overhead"
-                          ? "Flat-ground positions. Rings show distance from you. Dotted edges show a 40 yd fairway reference (20 yd each side)."
-                          : prefs.view === "dispersion"
-                            ? "Reported distance vs. sideways miss. This is a statistics chart, not a map."
-                            : "Reported distances grouped by physical club."}
-                      </p>
+                      <details className="inline-help">
+                        <summary>Reading this view</summary>
+                        <p className="muted small">
+                          {prefs.view === "overhead"
+                            ? "Flat-ground positions. Rings show distance from you. Dotted edges show a 40 yd fairway reference (20 yd each side)."
+                            : prefs.view === "dispersion"
+                              ? "Reported distance vs. sideways miss. This is a statistics chart, not a map."
+                              : "Reported distances grouped by physical club."}
+                        </p>
+                      </details>
                       {plotted.length ? (
                         <ShotChart
                           shots={matched}
@@ -832,41 +985,72 @@ export function App() {
                     </>
                   )}
                 </section>
-                <aside className="panel inspector">
-                  <div className="section-top inspector-heading">
-                    <h2>Shot details</h2>
-                    <Button
-                      variant="default"
-                      size="xs"
-                      disabled={!chosen}
-                      onClick={() => setSelected("")}
-                      aria-label="Clear inspected shot"
-                    >
-                      Clear
-                    </Button>
+                {!compactScreen && (
+                  <aside className="panel inspector">
+                    <div className="section-top inspector-heading">
+                      <h2>Shot details</h2>
+                      <Button
+                        variant="default"
+                        size="xs"
+                        disabled={!chosen}
+                        onClick={() => setSelected("")}
+                        aria-label="Clear inspected shot"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    <Select
+                      label="Inspect a shot"
+                      spellCheck={false}
+                      maxDropdownHeight={260}
+                      placeholder="Choose a shot"
+                      value={chosen ? selected : null}
+                      data={matched.map((s) => ({
+                        value: shotKey(s),
+                        label: `${s.club_label} · ${s.set_id} · ${s.session_date ?? "Undated"} · #${shotNumbers.get(shotKey(s))}`,
+                      }))}
+                      onChange={(v) => setSelected(v ?? "")}
+                    />
+                    {chosen ? (
+                      <ShotDetails shot={chosen} unit={prefs.unit} />
+                    ) : (
+                      <div className="inspector-empty muted small">
+                        <img
+                          className="caddie-empty-art"
+                          src={`${import.meta.env.BASE_URL}illustrations/bunny-scorecard.png`}
+                          alt=""
+                          width="96"
+                          height="96"
+                        />
+                        <p>Choose a shot to take a closer look.</p>
+                      </div>
+                    )}
+                  </aside>
+                )}
+                <Drawer
+                  opened={!!compactScreen && !!chosen && workspace === "shots"}
+                  onClose={() => setSelected("")}
+                  position="bottom"
+                  size="75dvh"
+                  title="Shot details"
+                  closeButtonProps={{ "aria-label": "Close shot details" }}
+                  classNames={{ header: "shot-sheet-header" }}
+                >
+                  <div className="shot-sheet-body">
+                    {chosen && <ShotDetails shot={chosen} unit={prefs.unit} />}
                   </div>
-                  <Select
-                    label="Inspect a shot"
-                    searchable
-                    placeholder="Choose a shot"
-                    value={chosen ? selected : null}
-                    data={matched.map((s) => ({
-                      value: shotKey(s),
-                      label: `${s.club_label} · ${s.set_id} · ${s.shot_id}`,
-                    }))}
-                    onChange={(v) => setSelected(v ?? "")}
-                  />
-                  {chosen ? (
-                    <ShotDetails shot={chosen} unit={prefs.unit} />
-                  ) : (
-                    <p className="inspector-empty muted small">
-                      Tap a dot or choose a shot to see details.
-                    </p>
-                  )}
-                </aside>
+                </Drawer>
               </div>
               <Accordion
                 className="selection-panels"
+                onClickCapture={(event) => {
+                  filterInteraction.current = (event.target as Element).closest(
+                    "button, input, select, canvas",
+                  );
+                  queueMicrotask(() => {
+                    filterInteraction.current = null;
+                  });
+                }}
                 multiple
                 variant="separated"
                 value={selectionPanels}
@@ -912,21 +1096,6 @@ export function App() {
                             onClick={() => setFilters({ ...filters, tags: [] })}
                           >
                             Clear tags
-                          </Button>
-                          <Button
-                            variant="default"
-                            size="xs"
-                            onClick={saveView}
-                          >
-                            Save filters
-                          </Button>
-                          <Button
-                            variant="light"
-                            size="xs"
-                            disabled={!savedView}
-                            onClick={() => savedView && setFilters(savedView)}
-                          >
-                            Restore filters
                           </Button>
                         </Group>
                       </div>
@@ -991,7 +1160,7 @@ export function App() {
                       </div>
                       <div className="filter-bottom">
                         <SegmentedControl
-                          size="xs"
+                          size="sm"
                           aria-label="Tag matching mode"
                           value={filters.mode}
                           onChange={(v) =>
@@ -1015,6 +1184,27 @@ export function App() {
                         Grouped: OR within each field, AND between fields. Dates
                         always narrow the result.
                       </p>
+                      <details className="chart-settings">
+                        <summary>Saved filters</summary>
+                        <Group gap="sm">
+                          {" "}
+                          <Button
+                            variant="default"
+                            size="xs"
+                            onClick={saveView}
+                          >
+                            Save filters
+                          </Button>
+                          <Button
+                            variant="light"
+                            size="xs"
+                            disabled={!savedView}
+                            onClick={() => savedView && setFilters(savedView)}
+                          >
+                            Restore filters
+                          </Button>
+                        </Group>
+                      </details>{" "}
                     </div>
                   </Accordion.Panel>
                 </Accordion.Item>
@@ -1270,6 +1460,7 @@ export function App() {
       </main>
       <Modal
         opened={settings}
+        closeButtonProps={{ "aria-label": "Close data settings" }}
         onClose={() => setSettings(false)}
         title={
           phone
@@ -1407,6 +1598,7 @@ export function App() {
         opened={!!pending}
         onClose={() => setPending(null)}
         title="Review this library"
+        closeButtonProps={{ "aria-label": "Close library review" }}
         size="lg"
       >
         <p>
@@ -1452,6 +1644,7 @@ export function App() {
         opened={details}
         onClose={() => setDetails(false)}
         title="Chart and statistics"
+        closeButtonProps={{ "aria-label": "Close chart explanation" }}
       >
         <p>
           Median is the middle shot distance. The middle 80% runs from the 10th
@@ -1512,19 +1705,48 @@ function ShotDetails({ shot: s, unit }: { shot: Shot; unit: Unit }) {
       <p className="muted small">
         {s.source} · {s.session_date ?? "Date unknown"}
       </p>
-      <dl>
-        {(["carry", "total"] as Metric[]).map((m) => (
-          <div key={m}>
-            <dt>{m === "carry" ? "Carry" : "Total"}</dt>
-            <dd>
-              {format(distance(s, m, unit))} {unit}
-              <small className="block muted">
-                {m === "carry" ? "Landing" : "Finishing"} left/right{" "}
-                {format(side(s, m, unit))} {unit}
-              </small>
-            </dd>
-          </div>
-        ))}
+      <dl className="shot-measurements">
+        {(["carry", "total"] as Metric[]).map((m) => {
+          const value = distance(s, m, unit);
+          return (
+            <div key={m} className="shot-distance-row">
+              <dt>{m === "carry" ? "Carry" : "Total"}</dt>
+              <dd>
+                {value === null ? (
+                  <span className="missing-measurement">Not recorded</span>
+                ) : (
+                  <>
+                    {format(value)}{" "}
+                    <span className="measurement-unit">{unit}</span>
+                  </>
+                )}
+              </dd>
+            </div>
+          );
+        })}
+        {(["carry", "total"] as Metric[]).map((m) => {
+          const value = side(s, m, unit);
+          return (
+            <div key={`${m}-side`}>
+              <dt>{m === "carry" ? "Landing side" : "Finishing side"}</dt>
+              <dd>
+                {value === null ? (
+                  <span className="missing-measurement">Not recorded</span>
+                ) : value === 0 ? (
+                  "On line"
+                ) : (
+                  <>
+                    {format(Math.abs(value))}{" "}
+                    <span className="measurement-unit">{unit}</span>{" "}
+                    <span className="side-direction">
+                      {value < 0 ? "left" : "right"}
+                    </span>
+                  </>
+                )}
+              </dd>
+            </div>
+          );
+        })}
         {trendMetrics
           .filter(
             (m) => !["carry", "total", "side", "spread"].includes(m.value),
@@ -1535,7 +1757,10 @@ function ShotDetails({ shot: s, unit }: { shot: Shot; unit: Unit }) {
               <div key={m.value}>
                 <dt>{m.label}</dt>
                 <dd>
-                  {format(value)} {trendUnit(m.value, unit)}
+                  {format(value)}{" "}
+                  <span className="measurement-unit">
+                    {trendUnit(m.value, unit)}
+                  </span>
                 </dd>
               </div>
             );

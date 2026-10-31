@@ -7,7 +7,7 @@ const club = z
   .strict();
 export const planSchema = z
   .object({
-    version: z.literal("finish-baseline-v1"),
+    version: z.enum(["finish-baseline-v1", "finish-baseline-v2-pooled"]),
     set: z.string().min(1),
     context: z.string(),
     targetM: positive,

@@ -1,3 +1,4 @@
+import { chartTheme, dateSliderStyle } from "./design/chartTheme";
 import { Button, Group, TextInput } from "@mantine/core";
 import { useEffect, useRef } from "react";
 import * as echarts from "echarts/core";
@@ -52,7 +53,12 @@ export function Timeline({
     onChange({ ...filters, start: "", end: "", session: "", undated: false });
   useEffect(() => {
     if (!ref.current || !dated.length) return;
-    const chart = echarts.init(ref.current);
+    // Hidden workspaces/accordions have no size yet. ResizeObserver supplies
+    // the visible dimensions when they open.
+    const chart = echarts.init(ref.current, undefined, {
+      width: ref.current.clientWidth || 1,
+      height: ref.current.clientHeight || 1,
+    });
     instance.current = chart;
     const byDay = new Map<string, number>();
     const points = dated.map(([key, s]) => {
@@ -65,8 +71,9 @@ export function Timeline({
       };
     });
     chart.setOption({
+      ...chartTheme,
       animation: false,
-      grid: { left: 24, right: 24, top: 12, bottom: 57 },
+      grid: { left: 24, right: 24, top: 12, bottom: 90 },
       tooltip: {
         renderMode: "richText",
         formatter: (raw: unknown) => {
@@ -85,11 +92,9 @@ export function Timeline({
       yAxis: { show: false, min: -1, max: Math.max(1, ...byDay.values()) },
       dataZoom: [
         {
-          type: "slider",
-          height: 22,
-          bottom: 0,
-          showDetail: false,
-          filterMode: "none",
+          ...dateSliderStyle,
+          left: 24,
+          right: 24,
           startValue: current.current.start
             ? Date.parse(current.current.start + "T00:00:00Z")
             : min - dayMs,
@@ -126,7 +131,12 @@ export function Timeline({
         end: iso(lo + ((hi - lo) * z.end) / 100),
       });
     });
-    const observer = new ResizeObserver(() => chart.resize());
+    const observer = new ResizeObserver(() =>
+      chart.resize({
+        width: ref.current?.clientWidth || 1,
+        height: ref.current?.clientHeight || 1,
+      }),
+    );
     observer.observe(ref.current);
     return () => {
       observer.disconnect();
@@ -151,7 +161,7 @@ export function Timeline({
   }, [filters.start, filters.end, min, max]);
   return (
     <section className={`timeline ${embedded ? "timeline-embedded" : "panel"}`}>
-      <div className="section-top">
+      <div className="timeline-toolbar">
         {!embedded && (
           <div>
             <h2>Session timeline</h2>
@@ -167,17 +177,22 @@ export function Timeline({
                   ? `${filters.start || "Beginning"} to ${filters.end || "Latest"}`
                   : `All ${sessions.length} sessions`}
           </span>
-          <Button variant="default" size="xs" onClick={clear}>
-            All dates
-          </Button>
-          {onBackToChart && (
-            <Button variant="default" size="xs" onClick={onBackToChart}>
-              Back to chart ↑
+          <div className="timeline-actions">
+            <Button variant="default" size="xs" onClick={clear}>
+              All dates
             </Button>
-          )}
+            {onBackToChart && (
+              <Button variant="default" size="xs" onClick={onBackToChart}>
+                Back to chart ↑
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-      <p className="muted small">Select a session or drag a date range.</p>
+      <p className="muted small">
+        Tap a session. Drag the handles to select dates, or the shaded range to
+        move it.
+      </p>
       <div className="timeline-range-layout">
         {dated.length > 0 ? (
           <div ref={ref} className="timeline-chart" />
@@ -186,7 +201,7 @@ export function Timeline({
         )}
         <Group gap="sm" align="end" className="timeline-date-inputs">
           <TextInput
-            label="From"
+            label="Start date"
             type="date"
             value={filters.start}
             max={filters.end || undefined}
@@ -200,7 +215,7 @@ export function Timeline({
             }
           />
           <TextInput
-            label="Through"
+            label="End date"
             type="date"
             value={filters.end}
             min={filters.start || undefined}
