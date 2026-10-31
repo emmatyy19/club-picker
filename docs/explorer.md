@@ -166,7 +166,9 @@ inspect it. The date slider and scroll zoom change the chart viewport without
 changing filters. **Session values** provides counts and exact summaries.
 No curve is fitted or interpolated across gaps between sessions.
 
-The chart views sit in their own large row above all other controls. **Play dates**
+The chart views sit in their own large row above all other controls. Playback
+and **Chart settings** stay above the visualization in every mode. Settings
+opens in a scrollable dialog so it stays inside the screen without moving the plot. **Play dates**
 steps through dates with available plotted measurements in the current selection,
 oldest first. Trends also respects its club and metric choice. Multiple providers on one date form one playback frame. Pause, the previous
 and next buttons, and 1/2/4-second speeds control playback. **All dates** in the
@@ -203,7 +205,7 @@ display threshold rather than proof of statistical reliability. Range rankings
 always require at least two shots, even under All samples. Counts with fewer
 than 10 shots or two dated sessions have a dotted underline. Hover or focus
 these counts for the sample note. An asterisk marks included undated shots.
-Measurement Details opens the full setup in a popover without expanding a row.
+Measurement Details opens the full setup in a scrollable dialog without expanding a row.
 The ranking table scrolls under a fixed header, and the shot inspector stays
 beside every view. Undated measured shots can contribute when the date filter
 allows them, but do not count as dated sessions. All shots have equal weight;

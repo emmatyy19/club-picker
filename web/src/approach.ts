@@ -100,23 +100,38 @@ export function carryHistory(rows: Shot[]) {
 }
 
 export type ApproachProfile = CarrySummary & {
+  assumedSwing: boolean;
+  mixedConditions: boolean;
   history: ReturnType<typeof carryHistory>;
   club: Shot;
   latest: string | null;
   carrySessions: number[][];
   total: CarrySummary | null;
 };
+export type ApproachSelection = {
+  source: Shot["source"] | "all";
+  swing: "full" | "partial";
+  includeUnknown: boolean;
+};
 export function approachProfiles(
   shots: Shot[],
   set: string,
-  context: string,
+  context: string | ApproachSelection,
 ): ApproachProfile[] {
   const clubs = new Map<string, Shot[]>();
   for (const s of shots) {
     if (
       !approachEligible(s) ||
       s.set_id !== set ||
-      approachContext(s) !== context
+      (typeof context === "string"
+        ? approachContext(s) !== context
+        : (context.source !== "all" && s.source !== context.source) ||
+          !(
+            s.intent === context.swing ||
+            (context.swing === "full" &&
+              context.includeUnknown &&
+              s.intent === "unknown")
+          ))
     )
       continue;
     clubs.set(s.club_id, [...(clubs.get(s.club_id) ?? []), s]);
@@ -139,6 +154,16 @@ export function approachProfiles(
       .flatMap((s) => (s.session_date ? [s.session_date] : []))
       .sort();
     return {
+      assumedSwing: rows.some((s) => s.intent === "unknown"),
+      mixedConditions:
+        new Set(
+          rows.map((s) => {
+            const parts = JSON.parse(approachContext(s)) as unknown[];
+            // Swing intent is handled explicitly by the selection, not a condition.
+            parts.splice(1, 1);
+            return JSON.stringify(parts);
+          }),
+        ).size > 1,
       ...summarizeCarry([...sessions.values()]),
       carrySessions: [...sessions.values()],
       total: totalSessions.size

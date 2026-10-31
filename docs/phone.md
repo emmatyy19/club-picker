@@ -68,3 +68,28 @@ initial library. Pushes to main, including merged PRs, trigger deployment after
 the workflow passes frontend checks and builds the app. A manual run remains
 available for retries. CI builds both variants. Public deployment never reads
 `data/private`.
+
+## Phone layout and icons
+
+On narrow screens, the approach units have their own row, inputs and buttons
+have larger touch targets, and chart tabs wrap so every view stays visible.
+Date playback uses fixed rows to keep play/pause from moving nearby controls.
+Vertical swipes over charts scroll the page; the zoom buttons remain available.
+
+The Home Screen icon uses an opaque square background, with a dedicated
+180-pixel Apple touch icon and 192/512-pixel manifest icons. The ball-peeking
+bunny artwork supplies these PNGs; the header uses the same design. The operating
+system supplies the rounded mask. Existing installations may retain their cached
+icon until re-added. Export the device library and logs before removing an app.
+
+The explorer groups Filters and Dates above the chart controls. Units stay
+near the graph across all five views. Playback and Chart settings sit above
+the visualization; secondary settings open in a scrollable dialog. On phones, rankings expand into details per
+club and selected shots open in a bottom sheet with a persistent close control.
+
+The approach form starts with club set, target distance, swing, and optional
+clearance. Slope and landing bounds are expandable. Recommendations retain their
+carry range and sample support, with longer practice history available on demand.
+The picker combines sources within each club set by default, with an optional
+source filter under Practice settings. See the [approach](approach.md) for the
+limits of pooling measurement conditions.

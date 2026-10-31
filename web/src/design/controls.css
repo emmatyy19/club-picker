@@ -1,0 +1,58 @@
+/* Shared Mantine surfaces. Layout stays in the owning component styles. */
+.mantine-Input-input {
+  background: var(--surface, #fffdf7);
+  border-color: var(--rule, #d9decf);
+  color: var(--ink, #193d31);
+  border-radius: 12px;
+}
+.mantine-Input-input:focus-within {
+  border-color: #52734d;
+}
+.mantine-InputWrapper-label {
+  color: #193d31;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.mantine-InputWrapper-description {
+  color: #5c685f;
+}
+.mantine-SegmentedControl-root {
+  background: #eeeee3;
+}
+.mantine-SegmentedControl-label {
+  font-weight: 600;
+}
+.mantine-Button-root[data-variant="default"] {
+  background: #fffdf7;
+  border-color: #d9decf;
+  color: #193d31;
+}
+.mantine-Button-root[data-variant="default"]:hover {
+  background: #e7eedc;
+}
+.mantine-Modal-content,
+.mantine-Modal-header,
+.mantine-Drawer-content,
+.mantine-Drawer-header,
+.mantine-Popover-dropdown,
+.mantine-Select-dropdown {
+  background: #fffdf7;
+  color: #193d31;
+}
+.mantine-Modal-content {
+  border-radius: 24px;
+}
+.mantine-Modal-title,
+.mantine-Drawer-title {
+  font-weight: 800;
+}
+.mantine-Checkbox-input {
+  border-color: #9aa98e;
+}
+.mantine-Table-th {
+  color: #5c685f;
+  font-weight: 800;
+}
+.mantine-Table-td {
+  font-variant-numeric: tabular-nums;
+}

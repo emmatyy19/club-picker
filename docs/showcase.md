@@ -1,5 +1,21 @@
 # A Look at My Shots
 
+## The Green
+
+I wanted the app to feel softer and more personal. The current interface uses
+warm cream, sage controls, rounded Nunito Sans lettering, and the bunny caddie.
+The same theme now runs through the explorer, picker, filters, and dialogs.
+These new captures use the synthetic library described below.
+
+![The Green explorer with two synthetic seven-irons](images/green-explorer.png)
+
+![The Green overhead view with synthetic finishing positions](images/green-overhead.png)
+
+![The Green approach recommendation at phone width](images/green-approach-phone.png)
+
+The earlier captures below record the previous interface and its interaction
+examples. The underlying data distinctions and calculation explanations still apply.
+
 I wanted a way to explore my whole bag without jumping between practice apps.
 These screenshots show the local explorer using **synthetic shots generated
 from summary statistics of my own private shot data**. Individual shots,

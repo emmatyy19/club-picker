@@ -8,7 +8,8 @@ a shot-data audit. See the [import guide](data-import.md) for a runnable synthet
 walkthrough. The [local explorer](explorer.md) adds a React/TypeScript UI over
 reviewed snapshots and a descriptive approach picker. Shared Trackman reports
 also have a reusable importer. Toptracer screenshot extraction still needs
-review; provider account sync and phone installation are not implemented.
+review. Provider account sync is not implemented. The [phone guide](phone.md)
+covers installation and offline use.
 
 ## Environment
 
@@ -82,3 +83,15 @@ See [AGENTS.md](../AGENTS.md) for the repository's working conventions.
 Use focused branches and descriptive conventional commits. Keep the public
 project story up to date when an implementation or experiment produces a
 meaningful result.
+
+## Local design preview
+
+With the development server running, open
+`http://127.0.0.1:5173/?design=green` to try the proposed pastel interface.
+The preview uses the synthetic showcase fixture and does not load a personal
+library. It includes a subset of explorer and approach controls for visual
+review. The full application at `/` now uses the same shared Green theme.
+
+The preview is available only in development. Production, showcase and phone
+builds continue to use the full application. Its component theme and styles live
+under `web/src/design/`; Nunito Sans is bundled locally through Fontsource.

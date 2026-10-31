@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from "react";
-import { Button, Select } from "@mantine/core";
+import { Button } from "@mantine/core";
 import { initialPlayback, playbackReducer } from "./playback";
 
 export function useDatePlayback(dates: string[], contextKey: string) {
@@ -22,7 +22,7 @@ export function Playback({
 }: {
   controller: ReturnType<typeof useDatePlayback>;
 }) {
-  const { dates, state, dispatch, speed, setSpeed } = controller;
+  const { dates, state, dispatch } = controller;
   const index = state.date === null ? -1 : dates.indexOf(state.date);
   return (
     <div className="playback-controls" aria-label="Date playback">
@@ -35,6 +35,7 @@ export function Playback({
           dispatch(state.playing ? { type: "pause" } : { type: "play", dates })
         }
       >
+        <span aria-hidden="true">{state.playing ? "Ⅱ" : "▶"}</span>{" "}
         {state.playing ? "Pause" : "Play dates"}
       </Button>
       <Button
@@ -62,17 +63,6 @@ export function Playback({
           ? `${state.date} · ${index + 1}/${dates.length}`
           : `${dates.length} selected dates`}
       </span>
-      <Select
-        aria-label="Playback speed"
-        size="xs"
-        value={speed}
-        onChange={(v) => v && setSpeed(v)}
-        data={[
-          { value: "1000", label: "1 sec / date" },
-          { value: "2000", label: "2 sec / date" },
-          { value: "4000", label: "4 sec / date" },
-        ]}
-      />
       <Button
         className="playback-reset"
         size="xs"

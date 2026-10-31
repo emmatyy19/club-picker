@@ -1,3 +1,4 @@
+import { chartTheme } from "./design/chartTheme";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   fullView,
@@ -95,7 +96,12 @@ export function ShotChart({
       navigationKey.current = key;
     }
     let dragged = false;
-    const chart = echarts.init(element);
+    // Hidden workspaces/accordions have no size yet. ResizeObserver supplies
+    // the visible dimensions when they open.
+    const chart = echarts.init(element, undefined, {
+      width: element.clientWidth || 1,
+      height: element.clientHeight || 1,
+    });
     const eligible = plottedShots(shots, metric, view);
     const point = (s: Shot): [number, number] =>
       view === "overhead"
@@ -150,7 +156,7 @@ export function ShotChart({
             all.map((s) => s[colorBy]),
           ),
           opacity: shotKey(s) === selected ? 1 : 0.75,
-          borderColor: "#fff",
+          borderColor: "#fffdf7",
           borderWidth: 1,
         },
       })),
@@ -232,6 +238,7 @@ export function ShotChart({
       }
       chart.setOption(
         {
+          ...chartTheme,
           animation: false,
           grid: { left: 55, right: 24, top: 34, bottom: 62 },
           tooltip: {
@@ -259,10 +266,10 @@ export function ShotChart({
                     showMaxLabel: false,
                     formatter: (v: number) => String(Math.round(v * 10) / 10),
                   },
-                  name: `Left  ←  Left/right (${unit}) →  Right`,
+                  name: `Left/right (${unit})`,
                   nameLocation: "middle",
                   nameGap: 35,
-                  splitLine: { lineStyle: { color: "#edf0ec" } },
+                  splitLine: { lineStyle: { color: "#e5e6db" } },
                 }
               : {
                   type: "category",
@@ -286,7 +293,7 @@ export function ShotChart({
                 ? `Forward (${unit})`
                 : `Reported ${metric} (${unit})`,
             nameTextStyle: { align: "left" },
-            splitLine: { lineStyle: { color: "#edf0ec" } },
+            splitLine: { lineStyle: { color: "#e5e6db" } },
             axisLabel: {
               color: "#718078",
               showMinLabel: false,
@@ -381,7 +388,10 @@ export function ShotChart({
         onSelect(shotKey(eligible[p.dataIndex]));
     });
     const observer = new ResizeObserver(() => {
-      chart.resize();
+      chart.resize({
+        width: element?.clientWidth || 1,
+        height: element?.clientHeight || 1,
+      });
       draw();
     });
     observer.observe(host.current);
