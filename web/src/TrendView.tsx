@@ -1,4 +1,6 @@
 import { ChartTools } from "./ChartTools";
+import { ChartTouchControl } from "./ChartTouchControl";
+import { useMediaQuery } from "@mantine/hooks";
 import { chartTheme, dateSliderStyle } from "./design/chartTheme";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Checkbox, Select, SegmentedControl, Table } from "@mantine/core";
@@ -168,44 +170,7 @@ export function Trends({
       : 0;
   return (
     <>
-      <ChartTools playback={playbackControl}>
-        {settings}
-        <div className="settings-checkboxes">
-          <Checkbox
-            radius="xs"
-            size="xs"
-            label="Individual shots"
-            checked={individual}
-            disabled={metric === "spread"}
-            onChange={(e) => setIndividual(e.currentTarget.checked)}
-          />
-          <Checkbox
-            className="measurement-group-toggle"
-            radius="xs"
-            size="xs"
-            label="Separate measurement groups"
-            disabled={combine || contexts.length < 2}
-            checked={separateGroups}
-            onChange={(e) => onSeparateGroupsChange(e.currentTarget.checked)}
-          />
-        </div>
-        <details className="measurement-explanation">
-          <summary>About measurement groups</summary>
-          <p>
-            Normalization adjusts reported results to standard conditions, so
-            adjusted and unadjusted measurements can differ. Unknown means the
-            setting was not recorded. Separate groups keeps each setup apart;
-            combining describes your selected mixture.
-          </p>
-          {contexts.map(([key, row], i) => (
-            <p key={key}>
-              {i + 1}. {row.club_label} · {row.set_id} · {row.source}:
-              normalization {row.normalization}; {row.normalization_settings};
-              compensation {row.compensation}.
-            </p>
-          ))}
-        </details>
-      </ChartTools>
+      {playbackControl}
       <div className="plot-controls trend-controls">
         {unitsControl}
         <Select
@@ -252,25 +217,44 @@ export function Trends({
             />
           </div>
         )}
-      </div>
-      <div className="availability trend-availability">
-        <strong>
-          {count} measured shots · {sessions.length}{" "}
-          {mode === "combined"
-            ? sessions.length === 1
-              ? "date"
-              : "dates"
-            : sessions.length === 1
-              ? "session group"
-              : "session groups"}
-        </strong>
-        {unknownValue > 0 && (
-          <span>{unknownValue} missing this measurement</span>
-        )}
-        {unknownDate > 0 && <span>{unknownDate} without a date</span>}
-        {small > 0 && (
-          <span>{small} session with fewer than 2 measurements</span>
-        )}
+        <ChartTools>
+          {settings}
+          <div className="settings-checkboxes">
+            <Checkbox
+              radius="xs"
+              size="xs"
+              label="Individual shots"
+              checked={individual}
+              disabled={metric === "spread"}
+              onChange={(e) => setIndividual(e.currentTarget.checked)}
+            />
+            <Checkbox
+              className="measurement-group-toggle"
+              radius="xs"
+              size="xs"
+              label="Separate measurement groups"
+              disabled={combine || contexts.length < 2}
+              checked={separateGroups}
+              onChange={(e) => onSeparateGroupsChange(e.currentTarget.checked)}
+            />
+          </div>
+          <details className="measurement-explanation">
+            <summary>About measurement groups</summary>
+            <p>
+              Normalization adjusts reported results to standard conditions, so
+              adjusted and unadjusted measurements can differ. Unknown means the
+              setting was not recorded. Separate groups keeps each setup apart;
+              combining describes your selected mixture.
+            </p>
+            {contexts.map(([key, row], i) => (
+              <p key={key}>
+                {i + 1}. {row.club_label} · {row.set_id} · {row.source}:
+                normalization {row.normalization}; {row.normalization_settings};
+                compensation {row.compensation}.
+              </p>
+            ))}
+          </details>
+        </ChartTools>
       </div>
       <p className="muted small">
         {metric === "spread"
@@ -298,6 +282,25 @@ export function Trends({
           <p>Choose another metric or adjust your selection.</p>
         </div>
       )}
+      <div className="availability trend-availability">
+        <strong>
+          {count} measured shots · {sessions.length}{" "}
+          {mode === "combined"
+            ? sessions.length === 1
+              ? "date"
+              : "dates"
+            : sessions.length === 1
+              ? "session group"
+              : "session groups"}
+        </strong>
+        {unknownValue > 0 && (
+          <span>{unknownValue} missing this measurement</span>
+        )}
+        {unknownDate > 0 && <span>{unknownDate} without a date</span>}
+        {small > 0 && (
+          <span>{small} session with fewer than 2 measurements</span>
+        )}
+      </div>
       {sessions.length > 0 && (
         <div className="legend trend-legend">
           {Object.entries(styles)
@@ -422,6 +425,14 @@ function TrendChart({
   onSelect: (key: string) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const instance = useRef<ReturnType<typeof echarts.init> | null>(null);
+  const [touchExploring, setTouchExploring] = useState(false);
+  const touchDevice = useMediaQuery(
+    "(max-width: 600px), (any-pointer: coarse)",
+  );
+  const touchEnabled = useRef(false);
+  touchEnabled.current = touchExploring;
+  const controls = useRef<(action: "in" | "out" | "reset") => void>(() => {});
   useEffect(() => {
     if (!host.current) return;
     // Hidden workspaces/accordions have no size yet. ResizeObserver supplies
@@ -430,6 +441,7 @@ function TrendChart({
       width: host.current.clientWidth || 1,
       height: host.current.clientHeight || 1,
     });
+    instance.current = chart;
     const dates = sessions.map((s) => Date.parse(`${s.date}T00:00:00Z`));
     const raw = sessions.flatMap((s, i) =>
       s.shots.map((p) => ({ ...p, date: dates[i] })),
@@ -546,7 +558,11 @@ function TrendChart({
         splitLine: { lineStyle: { color: "#e5e6db" } },
       },
       dataZoom: [
-        { type: "inside", filterMode: "none" },
+        {
+          type: "inside",
+          filterMode: "none",
+          disabled: touchDevice && !touchExploring,
+        },
         {
           ...dateSliderStyle,
           left: 60,
@@ -570,9 +586,25 @@ function TrendChart({
       },
       series,
     });
+    controls.current = (action) => {
+      const option = chart.getOption() as {
+        dataZoom: { start: number; end: number }[];
+      };
+      const { start, end } = option.dataZoom[0];
+      const width = Math.min(
+        100,
+        Math.max(2, (end - start) * (action === "in" ? 0.75 : 1 / 0.75)),
+      );
+      const lo = Math.max(0, Math.min(100 - width, (start + end - width) / 2));
+      chart.dispatchAction({
+        type: "dataZoom",
+        start: action === "reset" ? 0 : lo,
+        end: action === "reset" ? 100 : lo + width,
+      });
+    };
     chart.on("click", (p) => {
       const data = p.data as { shot?: Shot };
-      if (data.shot) onSelect(shotKey(data.shot));
+      if (!touchEnabled.current && data.shot) onSelect(shotKey(data.shot));
     });
     const observer = new ResizeObserver(() =>
       chart.resize({
@@ -584,6 +616,7 @@ function TrendChart({
     return () => {
       observer.disconnect();
       chart.dispose();
+      instance.current = null;
     };
   }, [
     sessions,
@@ -597,12 +630,36 @@ function TrendChart({
     individual,
     onSelect,
   ]);
+  useEffect(() => {
+    instance.current?.setOption({
+      dataZoom: [{ disabled: touchDevice && !touchExploring }],
+    });
+  }, [touchDevice, touchExploring]);
   return (
-    <div
-      ref={host}
-      className="trend-chart"
-      role="img"
-      aria-label={`${trendMetrics.find((m) => m.value === metric)!.label} over session dates. Session values are available in the table below.`}
-    />
+    <>
+      <div className="chart-navigation">
+        <button aria-label="Zoom in" onClick={() => controls.current("in")}>
+          +
+        </button>
+        <button aria-label="Zoom out" onClick={() => controls.current("out")}>
+          −
+        </button>
+        <button onClick={() => controls.current("reset")}>Reset view</button>
+        <ChartTouchControl
+          active={touchExploring}
+          onChange={setTouchExploring}
+        />
+      </div>
+      <div
+        ref={host}
+        className={`trend-chart chart-touch-surface${touchExploring ? " touch-exploring" : ""}`}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setTouchExploring(false);
+        }}
+        role="img"
+        aria-label={`${trendMetrics.find((m) => m.value === metric)!.label} over session dates. Session values are available in the table below.`}
+      />
+    </>
   );
 }

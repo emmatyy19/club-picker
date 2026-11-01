@@ -2,17 +2,10 @@ import { Button, Modal } from "@mantine/core";
 import { useState, type ReactNode } from "react";
 
 /** Common controls stay above the visualization in every chart mode. */
-export function ChartTools({
-  playback,
-  children,
-}: {
-  playback: ReactNode;
-  children: ReactNode;
-}) {
+export function ChartTools({ children }: { children: ReactNode }) {
   const [opened, setOpened] = useState(false);
   return (
-    <div className="chart-tools">
-      {playback}
+    <div className="chart-settings-access">
       <Button
         className="chart-settings-trigger"
         size="xs"

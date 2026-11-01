@@ -57,6 +57,9 @@ Keep snapshots under ignored storage, outside `web/`, Git, and published assets.
 
 ## Everyday workflow
 
+Club summaries and the shot table start collapsed below Filters and Dates.
+Open either header when needed; its count follows the current selection.
+
 Above the graph, **Latest session**, **Last 3**, and **Last 5** jump to recent
 practice dates. **Custom…** accepts another count; **All dates** clears the date
 selection. Each date counts once across sets and sources, and existing club and
