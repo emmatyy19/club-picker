@@ -1,8 +1,10 @@
 import { chartTheme } from "./design/chartTheme";
+import { ChartTouchControl } from "./ChartTouchControl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   fullView,
   panViewport,
+  pinchViewport,
   zoomViewport,
   type Viewport,
 } from "./navigation";
@@ -68,6 +70,10 @@ export function ShotChart({
   const navigationKey = useRef("");
   const controls = useRef<(action: "in" | "out" | "reset") => void>(() => {});
   const [zoom, setZoom] = useState(1);
+  const [touchExploring, setTouchExploring] = useState(false);
+  const touchEnabled = useRef(false);
+  touchEnabled.current = touchExploring;
+  useEffect(() => setTouchExploring(false), [view]);
   const contours = useMemo(
     () =>
       dispersionContours({
@@ -186,7 +192,7 @@ export function ShotChart({
     });
     const draw = () => {
       const plotWidth = Math.max(1, chart.getWidth() - 79);
-      const plotHeight = Math.max(1, chart.getHeight() - 96);
+      const plotHeight = Math.max(1, chart.getHeight() - 60);
       const bounds = overheadBounds(
         plotWidth,
         plotHeight,
@@ -225,7 +231,7 @@ export function ShotChart({
               silent: true,
               z: 10,
               left: 55 + (plotWidth * (0 - xMin)) / (xMax - xMin) + 8,
-              top: 34 + plotHeight * (1 - (r - yMin) / (yMax - yMin)) - 12,
+              top: 20 + plotHeight * (1 - (r - yMin) / (yMax - yMin)) - 12,
               style: {
                 text: `${r} ${unit}`,
                 fill: "#617068",
@@ -240,7 +246,7 @@ export function ShotChart({
         {
           ...chartTheme,
           animation: false,
-          grid: { left: 55, right: 24, top: 34, bottom: 62 },
+          grid: { left: 55, right: 24, top: 20, bottom: 40 },
           tooltip: {
             trigger: "item",
             renderMode: "richText",
@@ -266,7 +272,7 @@ export function ShotChart({
                     showMaxLabel: false,
                     formatter: (v: number) => String(Math.round(v * 10) / 10),
                   },
-                  name: `Left/right (${unit})`,
+                  name: "",
                   nameLocation: "middle",
                   nameGap: 35,
                   splitLine: { lineStyle: { color: "#e5e6db" } },
@@ -288,10 +294,7 @@ export function ShotChart({
             type: "value",
             min: yMin,
             max: yMax,
-            name:
-              view === "overhead"
-                ? `Forward (${unit})`
-                : `Reported ${metric} (${unit})`,
+            name: "",
             nameTextStyle: { align: "left" },
             splitLine: { lineStyle: { color: "#e5e6db" } },
             axisLabel: {
@@ -316,13 +319,13 @@ export function ShotChart({
       draw();
     };
     let drag: { x: number; y: number; initial: Viewport } | null = null;
-    const inside = (e: MouseEvent) => {
+    const inside = (e: { clientX: number; clientY: number }) => {
       const r = element.getBoundingClientRect();
       return (
         e.clientX >= r.left + 55 &&
         e.clientX <= r.right - 24 &&
-        e.clientY >= r.top + 34 &&
-        e.clientY <= r.bottom - 62
+        e.clientY >= r.top + 20 &&
+        e.clientY <= r.bottom - 40
       );
     };
     const wheel = (e: WheelEvent) => {
@@ -333,16 +336,79 @@ export function ShotChart({
         navigation.current,
         Math.exp(Math.max(-100, Math.min(100, e.deltaY)) * 0.003),
         (e.clientX - r.left - 55) / (r.width - 79),
-        1 - (e.clientY - r.top - 34) / (r.height - 96),
+        1 - (e.clientY - r.top - 20) / (r.height - 60),
       );
       draw();
     };
+    const fingers = new Map<number, { clientX: number; clientY: number }>();
+    let pinch: {
+      initial: Viewport;
+      midpoint: [number, number];
+      span: number;
+    } | null = null;
+    const fingerPosition = () => {
+      const points = [...fingers.values()].slice(0, 2);
+      const a = points[0],
+        b = points[1] ?? a;
+      const r = element.getBoundingClientRect();
+      return {
+        midpoint: [
+          ((a.clientX + b.clientX) / 2 - r.left - 55) /
+            Math.max(1, r.width - 79),
+          1 -
+            ((a.clientY + b.clientY) / 2 - r.top - 20) /
+              Math.max(1, r.height - 60),
+        ] as [number, number],
+        span: Math.max(
+          1,
+          Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+        ),
+      };
+    };
+    const rebaseTouch = () => {
+      pinch = fingers.size
+        ? { initial: { ...navigation.current }, ...fingerPosition() }
+        : null;
+    };
     const down = (e: PointerEvent) => {
+      if (e.pointerType === "touch") {
+        if (!touchEnabled.current) {
+          dragged = false;
+          return;
+        }
+        if (!inside(e)) return;
+        e.preventDefault();
+        element.setPointerCapture(e.pointerId);
+        fingers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+        dragged = true; // Touch exploration never also opens a shot drawer.
+        rebaseTouch();
+        return;
+      }
       if (!inside(e) || e.button !== 0) return;
       dragged = false;
       drag = { x: e.clientX, y: e.clientY, initial: { ...navigation.current } };
     };
     const move = (e: PointerEvent) => {
+      if (e.pointerType === "touch") {
+        if (!touchEnabled.current) {
+          fingers.clear();
+          pinch = null;
+          return;
+        }
+        if (!fingers.has(e.pointerId) || !pinch) return;
+        e.preventDefault();
+        fingers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+        const current = fingerPosition();
+        navigation.current = pinchViewport(
+          pinch.initial,
+          pinch.span / current.span,
+          pinch.midpoint,
+          current.midpoint,
+          view === "distance",
+        );
+        draw();
+        return;
+      }
       if (!drag) return;
       const dx = e.clientX - drag.x,
         dy = e.clientY - drag.y;
@@ -352,12 +418,22 @@ export function ShotChart({
       navigation.current = panViewport(
         drag.initial,
         view === "distance" ? 0 : -dx / (chart.getWidth() - 79),
-        dy / (chart.getHeight() - 96),
+        dy / (chart.getHeight() - 60),
       );
       draw();
     };
-    const up = () => {
+    const up = (e: PointerEvent) => {
+      if (e.pointerType === "touch") {
+        fingers.delete(e.pointerId);
+        if (element.hasPointerCapture(e.pointerId))
+          element.releasePointerCapture(e.pointerId);
+        rebaseTouch();
+        return;
+      }
       drag = null;
+    };
+    const touchMove = (e: TouchEvent) => {
+      if (touchEnabled.current && fingers.size) e.preventDefault();
     };
     const keyboard = (e: KeyboardEvent) => {
       const directions: Record<string, [number, number]> = {
@@ -382,9 +458,16 @@ export function ShotChart({
     element.addEventListener("pointermove", move);
     element.addEventListener("pointerup", up);
     element.addEventListener("pointercancel", up);
+    element.addEventListener("lostpointercapture", up);
+    element.addEventListener("touchmove", touchMove, { passive: false });
     element.addEventListener("keydown", keyboard);
     chart.on("click", (p) => {
-      if (!dragged && p.seriesType === "scatter" && eligible[p.dataIndex])
+      if (
+        !touchEnabled.current &&
+        !dragged &&
+        p.seriesType === "scatter" &&
+        eligible[p.dataIndex]
+      )
         onSelect(shotKey(eligible[p.dataIndex]));
     });
     const observer = new ResizeObserver(() => {
@@ -402,6 +485,8 @@ export function ShotChart({
       element.removeEventListener("pointermove", move);
       element.removeEventListener("pointerup", up);
       element.removeEventListener("pointercancel", up);
+      element.removeEventListener("lostpointercapture", up);
+      element.removeEventListener("touchmove", touchMove);
       element.removeEventListener("keydown", keyboard);
       chart.dispose();
     };
@@ -428,12 +513,19 @@ export function ShotChart({
         </button>
         <button onClick={() => controls.current("reset")}>Reset view</button>
         <span className="chart-zoom">{zoom.toFixed(1)}×</span>
-        <span className="navigation-hint">Scroll to zoom · Drag to pan</span>
+        <ChartTouchControl
+          active={touchExploring}
+          onChange={setTouchExploring}
+        />
       </div>
       <div
         ref={host}
         tabIndex={0}
-        className="shot-chart"
+        className={`shot-chart chart-touch-surface${touchExploring ? " touch-exploring" : ""}`}
+        style={{ touchAction: touchExploring ? "none" : "pan-y pinch-zoom" }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setTouchExploring(false);
+        }}
         role="img"
         aria-label={`${metric} ${view} chart. Select a shot using the table below for keyboard access.`}
       />

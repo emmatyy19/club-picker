@@ -76,7 +76,13 @@ available for retries. CI builds both variants. Public deployment never reads
 On narrow screens, the approach units have their own row, inputs and buttons
 have larger touch targets, and chart tabs wrap so every view stays visible.
 Date playback uses fixed rows to keep play/pause from moving nearby controls.
-Vertical swipes over charts scroll the page; the zoom buttons remain available.
+Vertical swipes over the main charts normally scroll the page. Tap **Explore
+chart** to give the graph touch control: drag with one finger to pan and pinch
+with two to zoom. The outlined graph stays in this mode until **Done exploring**
+is tapped, which restores page scrolling over it. The +, − and Reset view
+buttons also work without entering this mode. Trends has the same mode, plus
+its date slider. Actual two-finger behavior still needs an iPhone check after
+deployment; desktop browser checks cover controls and touch-action styles.
 
 The Home Screen icon uses an opaque square background, with a dedicated
 180-pixel Apple touch icon and 192/512-pixel manifest icons. The ball-peeking
@@ -95,3 +101,8 @@ carry range and sample support, with longer practice history available on demand
 The picker combines sources within each club set by default, with an optional
 source filter under Practice settings. See the [approach](approach.md) for the
 limits of pooling measurement conditions.
+
+Chart playback keeps play/pause, stepping, speed and selected-date status in a
+compact group. Chart settings sit beside the measurement controls. The play
+icon is an SVG, so iOS does not substitute an emoji. Both workspace headings
+reserve the same illustration size to avoid shifting content when switching.

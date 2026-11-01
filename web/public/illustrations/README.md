@@ -1,7 +1,7 @@
 # Caddie illustrations
 
 Generated using the built-in image generation tool, October 2026. Decorative
-assets with empty alt text; the existing SVG remains the app's logo.
+assets with empty alt text. The ball-peeking bunny supplies the app logo.
 
 - bunny-scorecard.png: cream bunny in a sage visor studying a scorecard.
 - bunny-ball.png: cream bunny in a sage visor peeking over a golf ball.
@@ -28,3 +28,13 @@ image tool removed the ivory background while preserving the pose, colors and
 iron, with the prompt: remove only the background and limb/shaft gaps, use true
 alpha transparency, preserve the subject, add no shadow or glow. The earlier
 opaque version is retained as the source reference.
+
+- bunny-shots.png: a matching full-body bunny with a scatter-plot scorecard and
+  pencil, generated with the built-in image tool for the My Shots header. It
+  shares the picker bunny's 120px desktop / 92px phone display box.
+
+Prompt: use the club-holding bunny as an identity/style reference; preserve the
+cream body, sage visor, forest outlines, blush ears and pink downward-triangle
+nose. Create a standing pose studying a small scorecard with five sage scatter
+dots and a pencil. Include ears and feet, use true alpha transparency, and add
+no text, backdrop, floor shadow or glow.

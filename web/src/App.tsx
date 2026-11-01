@@ -473,17 +473,6 @@ export function App() {
   const chartSettings = (
     <div className="plot-controls">
       <Select
-        label="Playback speed"
-        size="xs"
-        value={playback.speed}
-        onChange={(value) => value && playback.setSpeed(value)}
-        data={[
-          { value: "1000", label: "1 second" },
-          { value: "2000", label: "2 seconds" },
-          { value: "4000", label: "4 seconds" },
-        ]}
-      />{" "}
-      <Select
         label="Color by"
         size="xs"
         value={prefs.colorBy}
@@ -551,15 +540,15 @@ export function App() {
         <div className="page-heading">
           <div className="page-title-group">
             <h1>{workspace === "shots" ? "My Shots" : "Approach picker"}</h1>
-            {workspace === "approach" && (
+            {
               <img
                 className="page-caddie"
-                src={`${import.meta.env.BASE_URL}illustrations/bunny-club-cutout.png`}
+                src={`${import.meta.env.BASE_URL}illustrations/${workspace === "shots" ? "bunny-shots.png" : "bunny-club-cutout.png"}`}
                 alt=""
                 width="120"
                 height="120"
               />
-            )}
+            }
           </div>
           <Group gap="sm">
             {import.meta.env.DEV && !showcase && !phone && (
@@ -780,7 +769,7 @@ export function App() {
                   />
                   <Button
                     className="clear-selection"
-                    variant="subtle"
+                    variant="light"
                     size="xs"
                     disabled={
                       !(
@@ -796,9 +785,7 @@ export function App() {
                     Clear filters & dates
                   </Button>
                   {prefs.view !== "trends" && prefs.view !== "rankings" && (
-                    <ChartTools playback={<Playback controller={playback} />}>
-                      {chartSettings}
-                    </ChartTools>
+                    <Playback controller={playback} />
                   )}
                   <div className="plot-controls chart-options">
                     {prefs.view !== "trends" &&
@@ -836,6 +823,33 @@ export function App() {
                             })
                           }
                         />
+                      </>
+                    )}
+                    {prefs.view !== "trends" && prefs.view !== "rankings" && (
+                      <>
+                        <ChartTools>{chartSettings}</ChartTools>
+                        <Tooltip
+                          label={
+                            prefs.view === "overhead"
+                              ? "Flat-ground positions. Rings show distance from you. Dotted edges show a 40 yd fairway reference. Horizontal: left/right; vertical: forward distance."
+                              : prefs.view === "dispersion"
+                                ? "Horizontal: left/right miss. Vertical: reported distance. This is a statistics chart, not a map."
+                                : "Reported distances grouped by physical club. Vertical: distance; horizontal: club."
+                          }
+                          events={{ hover: true, focus: true, touch: true }}
+                          position={compactScreen ? "bottom" : "right"}
+                          middlewares={{ flip: true, shift: true }}
+                          withArrow
+                          multiline
+                          w={260}
+                        >
+                          <button
+                            className="chart-info"
+                            aria-label="About this view"
+                          >
+                            i
+                          </button>
+                        </Tooltip>
                       </>
                     )}
                   </div>
@@ -876,6 +890,41 @@ export function App() {
                     />
                   ) : (
                     <>
+                      {plotted.length ? (
+                        <ShotChart
+                          shots={matched}
+                          all={all}
+                          metric={prefs.metric}
+                          unit={prefs.unit}
+                          colorBy={prefs.colorBy}
+                          coverage={Number(prefs.coverage)}
+                          dispersionMode={prefs.dispersionMode}
+                          view={prefs.view}
+                          selected={selected}
+                          onSelect={setSelected}
+                        />
+                      ) : (
+                        <div className="chart-empty">
+                          <h3>
+                            {matched.length
+                              ? "No positions available for this selection."
+                              : "No shots match this view."}
+                          </h3>
+                          <p>
+                            {matched.length
+                              ? "Switch to Distances to see shots without left/right data."
+                              : "Change a tag or clear the date selection."}
+                          </p>
+                          {matched.length > 0 && (
+                            <Button
+                              variant="light"
+                              onClick={() => updatePrefs({ view: "distance" })}
+                            >
+                              Show distances
+                            </Button>
+                          )}
+                        </div>
+                      )}
                       <div className="availability">
                         <strong>{plotted.length} shots shown</strong>
                         {usable.length > measured.length && (
@@ -916,51 +965,6 @@ export function App() {
                           </span>
                         )}
                       </div>
-                      <details className="inline-help">
-                        <summary>Reading this view</summary>
-                        <p className="muted small">
-                          {prefs.view === "overhead"
-                            ? "Flat-ground positions. Rings show distance from you. Dotted edges show a 40 yd fairway reference (20 yd each side)."
-                            : prefs.view === "dispersion"
-                              ? "Reported distance vs. sideways miss. This is a statistics chart, not a map."
-                              : "Reported distances grouped by physical club."}
-                        </p>
-                      </details>
-                      {plotted.length ? (
-                        <ShotChart
-                          shots={matched}
-                          all={all}
-                          metric={prefs.metric}
-                          unit={prefs.unit}
-                          colorBy={prefs.colorBy}
-                          coverage={Number(prefs.coverage)}
-                          dispersionMode={prefs.dispersionMode}
-                          view={prefs.view}
-                          selected={selected}
-                          onSelect={setSelected}
-                        />
-                      ) : (
-                        <div className="chart-empty">
-                          <h3>
-                            {matched.length
-                              ? "No positions available for this selection."
-                              : "No shots match this view."}
-                          </h3>
-                          <p>
-                            {matched.length
-                              ? "Switch to Distances to see shots without left/right data."
-                              : "Change a tag or clear the date selection."}
-                          </p>
-                          {matched.length > 0 && (
-                            <Button
-                              variant="light"
-                              onClick={() => updatePrefs({ view: "distance" })}
-                            >
-                              Show distances
-                            </Button>
-                          )}
-                        </div>
-                      )}
                       <div className="legend" aria-label="Shot colors">
                         {[
                           ...new Set(
@@ -1249,215 +1253,261 @@ export function App() {
                     />
                   </Accordion.Panel>
                 </Accordion.Item>
-              </Accordion>
-              <section className="panel">
-                <div className="section-top">
-                  <div>
-                    <h2>Club summaries</h2>
-                  </div>
-                  <Button
-                    variant="default"
-                    size="xs"
-                    onClick={() => setDetails(true)}
-                  >
-                    How to read this
-                  </Button>
-                </div>
-                <p className="muted small">
-                  Unweighted usable shots · {prefs.metric} in {prefs.unit} ·
-                  separate clubs and settings
-                </p>
-                <div className="summary-grid">
-                  {grouped.map(([key, rows], i) => {
-                    const values = rows
-                        .map((s) => distance(s, prefs.metric, prefs.unit))
-                        .filter((n): n is number => n !== null),
-                      sides = rows
-                        .map((s) =>
-                          distance(s, prefs.metric, prefs.unit) !== null
-                            ? side(s, prefs.metric, prefs.unit)
-                            : null,
-                        )
-                        .filter((n): n is number => n !== null);
-                    const contour = ellipse(
-                      rows
-                        .filter(
-                          (s) =>
-                            distance(s, prefs.metric, prefs.unit) !== null &&
-                            side(s, prefs.metric, prefs.unit) !== null,
-                        )
-                        .map((s) => [
-                          side(s, prefs.metric, prefs.unit)!,
-                          distance(s, prefs.metric, prefs.unit)!,
-                        ]),
-                      Number(prefs.coverage) || 0.8,
-                    );
-                    const s = rows[0];
-                    return (
-                      <article
-                        className="club-card"
-                        key={key}
-                        style={{
-                          borderTopColor: color(
-                            s[prefs.colorBy],
-                            all.map((row) => row[prefs.colorBy]),
-                          ),
-                        }}
-                      >
-                        <div className="club-card-heading">
-                          <h3>{s.club_label}</h3>
-                          <Badge variant="light" color={setColor(s.set_id)}>
-                            {s.set_id}
-                          </Badge>
+                <Accordion.Item value="summaries" className="secondary-panel">
+                  <Accordion.Control>
+                    <span className="selection-panel-heading">
+                      <span className="selection-panel-title">
+                        Club summaries
+                      </span>
+                      <span className="selection-panel-count">
+                        {
+                          new Set(grouped.map(([, rows]) => rows[0].club_id))
+                            .size
+                        }{" "}
+                        clubs
+                      </span>
+                    </span>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    {selectionPanels.includes("summaries") && (
+                      <>
+                        <div className="section-top">
+                          <Button
+                            variant="default"
+                            size="xs"
+                            onClick={() => setDetails(true)}
+                          >
+                            How to read this
+                          </Button>
                         </div>
                         <p className="muted small">
-                          {s.source} · {values.length} measured / {rows.length}{" "}
-                          shots · {new Set(rows.map(sessionKey)).size}{" "}
-                          {new Set(rows.map(sessionKey)).size === 1
-                            ? "session"
-                            : "sessions"}
+                          Unweighted usable shots · {prefs.metric} in{" "}
+                          {prefs.unit} · separate clubs and settings
                         </p>
-                        <div className="median">
-                          {format(quantile(values, 0.5))}
-                          <small>{prefs.unit} median</small>
+                        <div className="summary-grid">
+                          {grouped.map(([key, rows], i) => {
+                            const values = rows
+                                .map((s) =>
+                                  distance(s, prefs.metric, prefs.unit),
+                                )
+                                .filter((n): n is number => n !== null),
+                              sides = rows
+                                .map((s) =>
+                                  distance(s, prefs.metric, prefs.unit) !== null
+                                    ? side(s, prefs.metric, prefs.unit)
+                                    : null,
+                                )
+                                .filter((n): n is number => n !== null);
+                            const contour = ellipse(
+                              rows
+                                .filter(
+                                  (s) =>
+                                    distance(s, prefs.metric, prefs.unit) !==
+                                      null &&
+                                    side(s, prefs.metric, prefs.unit) !== null,
+                                )
+                                .map((s) => [
+                                  side(s, prefs.metric, prefs.unit)!,
+                                  distance(s, prefs.metric, prefs.unit)!,
+                                ]),
+                              Number(prefs.coverage) || 0.8,
+                            );
+                            const s = rows[0];
+                            return (
+                              <article
+                                className="club-card"
+                                key={key}
+                                style={{
+                                  borderTopColor: color(
+                                    s[prefs.colorBy],
+                                    all.map((row) => row[prefs.colorBy]),
+                                  ),
+                                }}
+                              >
+                                <div className="club-card-heading">
+                                  <h3>{s.club_label}</h3>
+                                  <Badge
+                                    variant="light"
+                                    color={setColor(s.set_id)}
+                                  >
+                                    {s.set_id}
+                                  </Badge>
+                                </div>
+                                <p className="muted small">
+                                  {s.source} · {values.length} measured /{" "}
+                                  {rows.length} shots ·{" "}
+                                  {new Set(rows.map(sessionKey)).size}{" "}
+                                  {new Set(rows.map(sessionKey)).size === 1
+                                    ? "session"
+                                    : "sessions"}
+                                </p>
+                                <div className="median">
+                                  {format(quantile(values, 0.5))}
+                                  <small>{prefs.unit} median</small>
+                                </div>
+                                <dl>
+                                  <div>
+                                    <dt>Middle 80%</dt>
+                                    <dd>
+                                      {format(quantile(values, 0.1))} –{" "}
+                                      {format(quantile(values, 0.9))}
+                                    </dd>
+                                  </div>
+                                  <div>
+                                    <dt>Mean</dt>
+                                    <dd>
+                                      {format(
+                                        values.length
+                                          ? values.reduce((a, b) => a + b, 0) /
+                                              values.length
+                                          : null,
+                                      )}
+                                    </dd>
+                                  </div>
+                                  <div>
+                                    <dt>Min / max</dt>
+                                    <dd>
+                                      {values.length
+                                        ? `${format(Math.min(...values))} / ${format(Math.max(...values))}`
+                                        : "—"}
+                                    </dd>
+                                  </div>
+                                  <div>
+                                    <dt>Median side</dt>
+                                    <dd>
+                                      {format(quantile(sides, 0.5))}{" "}
+                                      <small>({sides.length} paired)</small>
+                                    </dd>
+                                  </div>
+                                </dl>
+                                <details>
+                                  <summary>
+                                    Measurement context · group {i + 1}
+                                  </summary>
+                                  {Number(prefs.coverage) > 0 && (
+                                    <p>
+                                      {contour
+                                        ? `Observed ellipse: ${contour.enclosed} of ${contour.n} paired shots enclosed.`
+                                        : "Observed ellipse unavailable: fewer than 10 pairs or singular covariance."}
+                                    </p>
+                                  )}
+                                  <Context shot={s} />
+                                </details>
+                              </article>
+                            );
+                          })}
                         </div>
-                        <dl>
-                          <div>
-                            <dt>Middle 80%</dt>
-                            <dd>
-                              {format(quantile(values, 0.1))} –{" "}
-                              {format(quantile(values, 0.9))}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt>Mean</dt>
-                            <dd>
-                              {format(
-                                values.length
-                                  ? values.reduce((a, b) => a + b, 0) /
-                                      values.length
-                                  : null,
-                              )}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt>Min / max</dt>
-                            <dd>
-                              {values.length
-                                ? `${format(Math.min(...values))} / ${format(Math.max(...values))}`
-                                : "—"}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt>Median side</dt>
-                            <dd>
-                              {format(quantile(sides, 0.5))}{" "}
-                              <small>({sides.length} paired)</small>
-                            </dd>
-                          </div>
-                        </dl>
-                        <details>
-                          <summary>Measurement context · group {i + 1}</summary>
-                          {Number(prefs.coverage) > 0 && (
-                            <p>
-                              {contour
-                                ? `Observed ellipse: ${contour.enclosed} of ${contour.n} paired shots enclosed.`
-                                : "Observed ellipse unavailable: fewer than 10 pairs or singular covariance."}
-                            </p>
-                          )}
-                          <Context shot={s} />
-                        </details>
-                      </article>
-                    );
-                  })}
-                </div>
-                {!grouped.length && (
-                  <p className="muted">No usable shots in this selection.</p>
-                )}
-              </section>
-              <section className="panel">
-                <div className="section-top">
-                  <div>
-                    <h2>
-                      Shot table <span className="count">{matched.length}</span>
-                    </h2>
-                  </div>
-                  <Group gap="sm">
-                    <Button
-                      size="xs"
-                      variant="default"
-                      disabled={page === 0}
-                      onClick={() => setPage((p) => p - 1)}
-                    >
-                      Previous
-                    </Button>
-                    <span className="small pagination-status">
-                      {page + 1} / {Math.max(1, Math.ceil(matched.length / 20))}
+                        {!grouped.length && (
+                          <p className="muted">
+                            No usable shots in this selection.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </Accordion.Panel>
+                </Accordion.Item>
+                <Accordion.Item value="table" className="secondary-panel">
+                  <Accordion.Control>
+                    <span className="selection-panel-heading">
+                      <span className="selection-panel-title">Shot table</span>
+                      <span className="selection-panel-count">
+                        {matched.length} shots
+                      </span>
                     </span>
-                    <Button
-                      size="xs"
-                      variant="default"
-                      disabled={(page + 1) * 20 >= matched.length}
-                      onClick={() => setPage((p) => p + 1)}
-                    >
-                      Next
-                    </Button>
-                  </Group>
-                </div>
-                <Table.ScrollContainer minWidth={680}>
-                  <Table highlightOnHover>
-                    <Table.Thead>
-                      <Table.Tr>
-                        {[
-                          "Shot",
-                          "Club / set",
-                          "Source",
-                          "Session date",
-                          `Carry (${prefs.unit})`,
-                          `Total (${prefs.unit})`,
-                          `Left/right (${prefs.unit})`,
-                          `Quality`,
-                        ].map((h) => (
-                          <Table.Th key={h}>{h}</Table.Th>
-                        ))}
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {matched.slice(page * 20, page * 20 + 20).map((s) => (
-                        <Table.Tr
-                          key={shotKey(s)}
-                          data-selected={selected === shotKey(s)}
-                        >
-                          <Table.Td>
-                            <button
-                              className="shot-link"
-                              onClick={() => setSelected(shotKey(s))}
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    {selectionPanels.includes("table") && (
+                      <>
+                        <div className="section-top">
+                          <Group gap="sm">
+                            <Button
+                              size="xs"
+                              variant="default"
+                              disabled={page === 0}
+                              onClick={() => setPage((p) => p - 1)}
                             >
-                              {s.shot_id}
-                            </button>
-                          </Table.Td>
-                          <Table.Td>
-                            {s.club_label}
-                            <small className="block muted">{s.set_id}</small>
-                          </Table.Td>
-                          <Table.Td>{s.source}</Table.Td>
-                          <Table.Td>{s.session_date ?? "Unknown"}</Table.Td>
-                          <Table.Td>
-                            {format(distance(s, "carry", prefs.unit))}
-                          </Table.Td>
-                          <Table.Td>
-                            {format(distance(s, "total", prefs.unit))}
-                          </Table.Td>
-                          <Table.Td>
-                            {format(side(s, prefs.metric, prefs.unit))}
-                          </Table.Td>
-                          <Table.Td>{s.quality}</Table.Td>
-                        </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                </Table.ScrollContainer>
-              </section>
+                              Previous
+                            </Button>
+                            <span className="small pagination-status">
+                              {page + 1} /{" "}
+                              {Math.max(1, Math.ceil(matched.length / 20))}
+                            </span>
+                            <Button
+                              size="xs"
+                              variant="default"
+                              disabled={(page + 1) * 20 >= matched.length}
+                              onClick={() => setPage((p) => p + 1)}
+                            >
+                              Next
+                            </Button>
+                          </Group>
+                        </div>
+                        <Table.ScrollContainer minWidth={680}>
+                          <Table highlightOnHover>
+                            <Table.Thead>
+                              <Table.Tr>
+                                {[
+                                  "Shot",
+                                  "Club / set",
+                                  "Source",
+                                  "Session date",
+                                  `Carry (${prefs.unit})`,
+                                  `Total (${prefs.unit})`,
+                                  `Left/right (${prefs.unit})`,
+                                  `Quality`,
+                                ].map((h) => (
+                                  <Table.Th key={h}>{h}</Table.Th>
+                                ))}
+                              </Table.Tr>
+                            </Table.Thead>
+                            <Table.Tbody>
+                              {matched
+                                .slice(page * 20, page * 20 + 20)
+                                .map((s) => (
+                                  <Table.Tr
+                                    key={shotKey(s)}
+                                    data-selected={selected === shotKey(s)}
+                                  >
+                                    <Table.Td>
+                                      <button
+                                        className="shot-link"
+                                        onClick={() => setSelected(shotKey(s))}
+                                      >
+                                        {s.shot_id}
+                                      </button>
+                                    </Table.Td>
+                                    <Table.Td>
+                                      {s.club_label}
+                                      <small className="block muted">
+                                        {s.set_id}
+                                      </small>
+                                    </Table.Td>
+                                    <Table.Td>{s.source}</Table.Td>
+                                    <Table.Td>
+                                      {s.session_date ?? "Unknown"}
+                                    </Table.Td>
+                                    <Table.Td>
+                                      {format(distance(s, "carry", prefs.unit))}
+                                    </Table.Td>
+                                    <Table.Td>
+                                      {format(distance(s, "total", prefs.unit))}
+                                    </Table.Td>
+                                    <Table.Td>
+                                      {format(
+                                        side(s, prefs.metric, prefs.unit),
+                                      )}
+                                    </Table.Td>
+                                    <Table.Td>{s.quality}</Table.Td>
+                                  </Table.Tr>
+                                ))}
+                            </Table.Tbody>
+                          </Table>
+                        </Table.ScrollContainer>
+                      </>
+                    )}
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
             </div>
           </>
         )}

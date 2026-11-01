@@ -80,24 +80,7 @@ export function Rankings({
           : "Median";
   return (
     <>
-      <ChartTools playback={playbackControl}>
-        {settings}
-        <div className="plot-controls">
-          {" "}
-          <Select
-            size="xs"
-            label="Minimum shots"
-            value={minimum}
-            data={[
-              { value: "10", label: "10" },
-              { value: "20", label: "20" },
-              { value: "30", label: "30" },
-              { value: "1", label: "All samples" },
-            ]}
-            onChange={(v) => v && setMinimum(v)}
-          />
-        </div>
-      </ChartTools>
+      {playbackControl}
       <div className="plot-controls ranking-controls">
         {unitsControl}
         <Select
@@ -131,6 +114,24 @@ export function Rankings({
             />
           </div>
         )}
+        <ChartTools>
+          {settings}
+          <div className="plot-controls">
+            {" "}
+            <Select
+              size="xs"
+              label="Minimum shots"
+              value={minimum}
+              data={[
+                { value: "10", label: "10" },
+                { value: "20", label: "20" },
+                { value: "30", label: "30" },
+                { value: "1", label: "All samples" },
+              ]}
+              onChange={(v) => v && setMinimum(v)}
+            />
+          </div>
+        </ChartTools>
       </div>
       <div className="availability trend-availability">
         <strong>{result.rows.length} ranked groups</strong>
