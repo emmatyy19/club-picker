@@ -43,6 +43,7 @@ echarts.use([
   CanvasRenderer,
 ]);
 export function ShotChart({
+  corridorWidthM = 36.576,
   shots,
   all,
   metric,
@@ -54,6 +55,7 @@ export function ShotChart({
   selected,
   onSelect,
 }: {
+  corridorWidthM?: number;
   shots: Shot[];
   all: Shot[];
   metric: Metric;
@@ -176,8 +178,8 @@ export function ShotChart({
               data: [
                 { xAxis: 0 },
                 ...(view === "overhead"
-                  ? [-20, 20].map((yards) => ({
-                      xAxis: yards * (unit === "yd" ? 1 : 0.9144),
+                  ? [-corridorWidthM / 2, corridorWidthM / 2].map((meters) => ({
+                      xAxis: meters / (unit === "yd" ? 0.9144 : 1),
                       lineStyle: {
                         color: "#8ca394",
                         type: "dotted" as const,
@@ -491,6 +493,7 @@ export function ShotChart({
       chart.dispose();
     };
   }, [
+    corridorWidthM,
     shots,
     all,
     metric,

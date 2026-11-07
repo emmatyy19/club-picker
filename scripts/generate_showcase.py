@@ -13,6 +13,8 @@ def generate() -> None:
     """Sample correlated distance/roll/side values and invent all session metadata."""
     profile = json.loads((ROOT / "data/public/showcase-profile.json").read_text())
     rng = random.Random(413)
+    club_rng = random.Random(912)
+    launch_rng = random.Random(711)
     shots: list[dict[str, object]] = []
     for group_index, group in enumerate(profile["groups"]):
         covariance = group["covariance"]
@@ -48,6 +50,13 @@ def generate() -> None:
                         "source_unit": "m",
                         "session_date": day,
                         "carry_m": round(carry, 2),
+                        # Illustrative launch metrics, not derived from private data
+                        # or a validated ball-flight model. Keep their RNG separate.
+                        "ball_speed_mps": round(
+                            max(1, carry / 3 + launch_rng.gauss(0, 3)), 2
+                        ),
+                        "spin_rpm": round(max(500, launch_rng.gauss(4500, 1200))),
+                        "launch_deg": round(launch_rng.uniform(10, 25), 1),
                         "total_m": round(total, 2),
                         "total_side_m": round(side, 2),
                         "total_distance_geometry": "radial",
@@ -65,6 +74,10 @@ def generate() -> None:
                         "surface": "unknown",
                     }
                 )
+    for shot in shots:
+        shot["club_speed_mps"] = round(
+            float(str(shot["ball_speed_mps"])) / club_rng.uniform(1.15, 1.45), 3
+        )
     output = {
         "kind": "club-picker-explorer",
         "version": 1,

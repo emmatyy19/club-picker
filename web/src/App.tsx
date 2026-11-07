@@ -1,3 +1,5 @@
+import { RolloutView } from "./RolloutView";
+import { MissPatterns } from "./MissPatterns";
 import { ChartTools } from "./ChartTools";
 import { ViewIcon } from "./design/Icons";
 import {
@@ -28,6 +30,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import { OfflineStatus } from "./OfflineStatus";
 import { ApproachPicker } from "./ApproachPicker";
 import { ShotChart } from "./Chart";
+import { ClubDistances } from "./PracticeVisuals";
 import { MeasurementContext as Context } from "./MeasurementContext";
 import type { DispersionMode } from "./dispersion";
 import { Trends } from "./TrendView";
@@ -135,7 +138,9 @@ function preferences(): Preferences {
 }
 export function App() {
   const phone = import.meta.env.MODE === "phone";
+  const [corridorWidthM, setCorridorWidthM] = useState(36.576);
   const [personalDevice, setPersonalDevice] = useState(false);
+  const [distanceDisplay, setDistanceDisplay] = useState("ranges");
   const showcase =
     import.meta.env.MODE === "showcase" || (phone && !personalDevice);
   const [library, setLibrary] = useState<Snapshot | null>(null),
@@ -796,12 +801,33 @@ export function App() {
                         <span className="control-label">Distance</span>
                         <SegmentedControl
                           size="sm"
+                          disabled={
+                            prefs.view === "distance" &&
+                            distanceDisplay === "rollout"
+                          }
                           aria-label="Distance metric"
                           value={prefs.metric}
                           onChange={(v) => updatePrefs({ metric: v as Metric })}
                           data={[
                             { label: "Carry", value: "carry" },
                             { label: "Total", value: "total" },
+                          ]}
+                        />
+                      </div>
+                    )}
+                    {prefs.view === "distance" && (
+                      <div className="control-field">
+                        <span className="control-label">Display</span>
+                        <SegmentedControl
+                          size="sm"
+                          className="distance-display-control"
+                          aria-label="Distance display"
+                          value={distanceDisplay}
+                          onChange={setDistanceDisplay}
+                          data={[
+                            { value: "ranges", label: "Club gaps" },
+                            { value: "shots", label: "Shots" },
+                            { value: "rollout", label: "Carry + rollout" },
                           ]}
                         />
                       </div>
@@ -827,14 +853,21 @@ export function App() {
                     )}
                     {prefs.view !== "trends" && prefs.view !== "rankings" && (
                       <>
-                        <ChartTools>{chartSettings}</ChartTools>
+                        {!(
+                          prefs.view === "distance" &&
+                          distanceDisplay !== "shots"
+                        ) && <ChartTools>{chartSettings}</ChartTools>}
                         <Tooltip
                           label={
                             prefs.view === "overhead"
-                              ? "Flat-ground positions. Rings show distance from you. Dotted edges show a 40 yd fairway reference. Horizontal: left/right; vertical: forward distance."
+                              ? "Flat-ground positions. Rings show distance from you. Dotted edges show the adjustable target corridor. Horizontal: left/right; vertical: forward distance."
                               : prefs.view === "dispersion"
                                 ? "Horizontal: left/right miss. Vertical: reported distance. This is a statistics chart, not a map."
-                                : "Reported distances grouped by physical club. Vertical: distance; horizontal: club."
+                                : distanceDisplay === "rollout"
+                                  ? "Paired carry and total measurements by club, with observed rollout ranges."
+                                  : distanceDisplay !== "shots"
+                                    ? "Distance ranges by physical club. Each date has equal weight. Gap labels use dates shared by adjacent clubs; carry is most useful for comparing club gaps. Hover or tap a band for its measurements."
+                                    : "Reported distances grouped by physical club. Vertical: distance; horizontal: club."
                           }
                           events={{ hover: true, focus: true, touch: true }}
                           position={compactScreen ? "bottom" : "right"}
@@ -869,6 +902,9 @@ export function App() {
                     <Trends
                       shots={filtered}
                       playbackDate={playbackDate}
+                      onStopPlayback={() =>
+                        playback.dispatch({ type: "reset" })
+                      }
                       onPlaybackDatesChange={updateTrendDates}
                       settings={chartSettings}
                       unitsControl={chartUnits}
@@ -890,8 +926,19 @@ export function App() {
                     />
                   ) : (
                     <>
-                      {plotted.length ? (
+                      {prefs.view === "distance" &&
+                      distanceDisplay === "rollout" ? (
+                        <RolloutView shots={matched} unit={prefs.unit} />
+                      ) : prefs.view === "distance" &&
+                        distanceDisplay === "ranges" ? (
+                        <ClubDistances
+                          shots={matched}
+                          metric={prefs.metric}
+                          unit={prefs.unit}
+                        />
+                      ) : plotted.length ? (
                         <ShotChart
+                          corridorWidthM={corridorWidthM}
                           shots={matched}
                           all={all}
                           metric={prefs.metric}
@@ -925,7 +972,22 @@ export function App() {
                           )}
                         </div>
                       )}
-                      <div className="availability">
+                      {prefs.view === "overhead" && (
+                        <MissPatterns
+                          shots={matched}
+                          metric={prefs.metric}
+                          unit={prefs.unit}
+                          widthM={corridorWidthM}
+                          onWidth={setCorridorWidthM}
+                        />
+                      )}
+                      <div
+                        className="availability"
+                        hidden={
+                          prefs.view === "distance" &&
+                          distanceDisplay !== "shots"
+                        }
+                      >
                         <strong>{plotted.length} shots shown</strong>
                         {usable.length > measured.length && (
                           <span>
@@ -965,7 +1027,14 @@ export function App() {
                           </span>
                         )}
                       </div>
-                      <div className="legend" aria-label="Shot colors">
+                      <div
+                        className="legend"
+                        aria-label="Shot colors"
+                        hidden={
+                          prefs.view === "distance" &&
+                          distanceDisplay !== "shots"
+                        }
+                      >
                         {[
                           ...new Set(
                             plotted
@@ -1819,7 +1888,7 @@ function ShotDetails({ shot: s, unit }: { shot: Shot; unit: Unit }) {
               <div key={m.value}>
                 <dt>{m.label}</dt>
                 <dd>
-                  {format(value)}{" "}
+                  {m.value === "smash" ? value.toFixed(2) : format(value)}{" "}
                   <span className="measurement-unit">
                     {trendUnit(m.value, unit)}
                   </span>

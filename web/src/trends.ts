@@ -11,6 +11,8 @@ import {
 export const trendMetrics = [
   { value: "carry", label: "Carry" },
   { value: "total", label: "Total" },
+  { value: "club_speed", label: "Club speed" },
+  { value: "smash", label: "Smash factor" },
   { value: "ball_speed", label: "Ball speed" },
   { value: "side", label: "Left / right" },
   { value: "spread", label: "Sideways spread" },
@@ -23,7 +25,9 @@ export const trendMetrics = [
 ] as const;
 export type TrendMetric = (typeof trendMetrics)[number]["value"];
 export function trendUnit(metric: TrendMetric, unit: Unit): string {
-  if (metric === "ball_speed") return unit === "yd" ? "mph" : "m/s";
+  if (metric === "smash") return "";
+  if (metric === "ball_speed" || metric === "club_speed")
+    return unit === "yd" ? "mph" : "m/s";
   if (metric === "spin") return "rpm";
   if (["launch", "landing"].includes(metric)) return "°";
   if (metric === "hang_time") return "s";
@@ -40,6 +44,16 @@ export function trendValue(
     return distance(shot, metric, unit);
   if (metric === "side" || metric === "spread")
     return side(shot, lateral, unit);
+  if (metric === "smash")
+    return shot.club_speed_mps != null &&
+      shot.club_speed_mps > 0 &&
+      shot.ball_speed_mps != null
+      ? shot.ball_speed_mps / shot.club_speed_mps
+      : null;
+  if (metric === "club_speed")
+    return shot.club_speed_mps == null
+      ? null
+      : shot.club_speed_mps / (unit === "yd" ? 0.44704 : 1);
   if (metric === "ball_speed")
     return shot.ball_speed_mps == null
       ? null

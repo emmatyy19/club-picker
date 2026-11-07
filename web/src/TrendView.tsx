@@ -1,4 +1,9 @@
+import { PrioritiesView } from "./PrioritiesView";
+import { RelationshipsView } from "./RelationshipsView";
+import { ConsistencyView } from "./ConsistencyView";
 import { ChartTools } from "./ChartTools";
+import { PracticeComparison } from "./PracticeVisuals";
+import { practiceContext } from "./insights";
 import { ChartTouchControl } from "./ChartTouchControl";
 import { useMediaQuery } from "@mantine/hooks";
 import { chartTheme, dateSliderStyle } from "./design/chartTheme";
@@ -58,7 +63,9 @@ export function Trends({
   unitsControl,
   playbackControl,
   onPlaybackDatesChange,
+  onStopPlayback,
 }: {
+  onStopPlayback: () => void;
   combine: boolean;
   onCombineChange: (combine: boolean) => void;
   separateGroups: boolean;
@@ -79,6 +86,10 @@ export function Trends({
   const [metric, setMetric] = useState<TrendMetric>("carry");
   const [club, setClub] = useState("");
   const [individual, setIndividual] = useState(false);
+  const [display, setDisplay] = useState("timeline");
+  const previousControlView = useRef(display);
+  if (display !== "priorities") previousControlView.current = display;
+  const controlView = previousControlView.current;
   const clubs = [
     ...new Map(
       shots
@@ -94,9 +105,12 @@ export function Trends({
         shots.filter((s) => s.club_id === b.club_id).length -
         shots.filter((s) => s.club_id === a.club_id).length,
     )[0];
+  const preferred = clubs.find(
+    (s) => s.set_id === "set-a" && /^7\s*-?\s*iron$/i.test(s.club_label),
+  );
   const chosenClub = clubs.some((s) => s.club_id === club)
     ? club
-    : best?.club_id;
+    : (preferred ?? best)?.club_id;
   const selected = useMemo(
     () => (combine ? shots : shots.filter((s) => s.club_id === chosenClub)),
     [combine, shots, chosenClub],
@@ -105,13 +119,27 @@ export function Trends({
     ...new Map(
       selected
         .filter((s) => s.quality === "usable")
-        .map((s) => [trendContext(s, metric, lateral), s]),
+        .map((s) => [
+          display !== "timeline"
+            ? JSON.stringify([s.club_id, practiceContext(s)])
+            : trendContext(s, metric, lateral),
+          s,
+        ]),
     ).entries(),
   ];
   const mode = combine || !separateGroups ? "combined" : "separate";
   const domainSessions = useMemo(
-    () => sessionTrends(selected, metric, unit, lateral, mode),
-    [selected, metric, unit, lateral, mode],
+    () =>
+      sessionTrends(
+        selected,
+        ["consistency", "relationships", "priorities"].includes(display)
+          ? "carry"
+          : metric,
+        unit,
+        lateral,
+        mode,
+      ),
+    [selected, metric, unit, lateral, mode, display],
   );
   useEffect(
     () =>
@@ -170,100 +198,178 @@ export function Trends({
       : 0;
   return (
     <>
-      {playbackControl}
-      <div className="plot-controls trend-controls">
-        {unitsControl}
-        <Select
-          size="xs"
-          label="Trend metric"
-          value={metric}
-          data={[...trendMetrics]}
-          onChange={(v) => v && setMetric(v as TrendMetric)}
-        />
-        <Select
-          size="xs"
-          label="Physical club"
-          searchable
-          disabled={combine}
-          placeholder="All selected clubs"
-          value={combine ? null : (chosenClub ?? null)}
-          data={clubs.map((s) => ({
-            value: s.club_id,
-            label: `${s.club_label} · ${s.set_id}`,
-          }))}
-          onChange={(v) => setClub(v ?? "")}
-        />
-        <Checkbox
-          className="control-checkbox"
-          radius="xs"
-          size="xs"
-          label="Combine selection"
-          checked={combine}
-          onChange={(e) => onCombineChange(e.currentTarget.checked)}
-        />
-        {["side", "spread"].includes(metric) && (
-          <div className="control-field">
-            <span className="control-label">Left/right at</span>
-            <SegmentedControl
+      <div
+        className={
+          display === "priorities" ? "trend-controls-inactive" : undefined
+        }
+        inert={display === "priorities"}
+        title={
+          display === "priorities"
+            ? "Practice priorities uses the date filters and its own club-set controls below."
+            : undefined
+        }
+      >
+        {playbackControl}
+        <div className="plot-controls trend-controls">
+          {unitsControl}
+          {!["consistency", "relationships", "priorities"].includes(
+            controlView,
+          ) && (
+            <Select
               size="xs"
-              disabled={!["side", "spread"].includes(metric)}
-              aria-label="Left/right position"
-              value={lateral}
-              onChange={(v) => onLateralChange(v as Metric)}
-              data={[
-                { value: "carry", label: "Landing" },
-                { value: "total", label: "Finishing" },
-              ]}
+              disabled={controlView === "consistency"}
+              label={
+                controlView === "consistency" ? "Metric: carry" : "Trend metric"
+              }
+              value={
+                ["consistency", "relationships", "priorities"].includes(
+                  controlView,
+                )
+                  ? "carry"
+                  : metric
+              }
+              data={[...trendMetrics]}
+              onChange={(v) => v && setMetric(v as TrendMetric)}
             />
-          </div>
-        )}
-        <ChartTools>
-          {settings}
-          <div className="settings-checkboxes">
-            <Checkbox
-              radius="xs"
-              size="xs"
-              label="Individual shots"
-              checked={individual}
-              disabled={metric === "spread"}
-              onChange={(e) => setIndividual(e.currentTarget.checked)}
-            />
-            <Checkbox
-              className="measurement-group-toggle"
-              radius="xs"
-              size="xs"
-              label="Separate measurement groups"
-              disabled={combine || contexts.length < 2}
-              checked={separateGroups}
-              onChange={(e) => onSeparateGroupsChange(e.currentTarget.checked)}
-            />
-          </div>
-          <details className="measurement-explanation">
-            <summary>About measurement groups</summary>
-            <p>
-              Normalization adjusts reported results to standard conditions, so
-              adjusted and unadjusted measurements can differ. Unknown means the
-              setting was not recorded. Separate groups keeps each setup apart;
-              combining describes your selected mixture.
-            </p>
-            {contexts.map(([key, row], i) => (
-              <p key={key}>
-                {i + 1}. {row.club_label} · {row.set_id} · {row.source}:
-                normalization {row.normalization}; {row.normalization_settings};
-                compensation {row.compensation}.
+          )}
+          <Select
+            size="xs"
+            label="Physical club"
+            searchable
+            disabled={combine}
+            placeholder="All selected clubs"
+            value={combine ? null : (chosenClub ?? null)}
+            data={clubs.map((s) => ({
+              value: s.club_id,
+              label: `${s.club_label} · ${s.set_id}`,
+            }))}
+            onChange={(v) => setClub(v ?? "")}
+          />
+          <Checkbox
+            className="control-checkbox"
+            radius="xs"
+            size="xs"
+            label="Combine selection"
+            checked={combine}
+            onChange={(e) => onCombineChange(e.currentTarget.checked)}
+          />
+          {!["consistency", "relationships", "priorities"].includes(
+            controlView,
+          ) &&
+            ["side", "spread"].includes(metric) && (
+              <div className="control-field">
+                <span className="control-label">Left/right at</span>
+                <SegmentedControl
+                  size="xs"
+                  disabled={!["side", "spread"].includes(metric)}
+                  aria-label="Left/right position"
+                  value={lateral}
+                  onChange={(v) => onLateralChange(v as Metric)}
+                  data={[
+                    { value: "carry", label: "Landing" },
+                    { value: "total", label: "Finishing" },
+                  ]}
+                />
+              </div>
+            )}
+          <ChartTools>
+            {controlView === "timeline" && settings}
+            <div className="settings-checkboxes">
+              {controlView === "timeline" && (
+                <Checkbox
+                  radius="xs"
+                  size="xs"
+                  label="Individual shots"
+                  checked={individual}
+                  disabled={metric === "spread"}
+                  onChange={(e) => setIndividual(e.currentTarget.checked)}
+                />
+              )}
+              <Checkbox
+                className="measurement-group-toggle"
+                radius="xs"
+                size="xs"
+                label="Separate measurement groups"
+                disabled={combine || contexts.length < 2}
+                checked={separateGroups}
+                onChange={(e) =>
+                  onSeparateGroupsChange(e.currentTarget.checked)
+                }
+              />
+            </div>
+            <details className="measurement-explanation">
+              <summary>About measurement groups</summary>
+              <p>
+                Normalization adjusts reported results to standard conditions,
+                so adjusted and unadjusted measurements can differ. Unknown
+                means the setting was not recorded. Separate groups keeps each
+                setup apart; combining describes your selected mixture.
               </p>
-            ))}
-          </details>
-        </ChartTools>
+              {contexts.map(([key, row], i) => (
+                <p key={key}>
+                  {i + 1}. {row.club_label} · {row.set_id} · {row.source}:
+                  normalization {row.normalization};{" "}
+                  {row.normalization_settings}; compensation {row.compensation}.
+                </p>
+              ))}
+            </details>
+          </ChartTools>
+        </div>
       </div>
-      <p className="muted small">
-        {metric === "spread"
-          ? `${mode === "combined" ? "Daily" : "Session"} P90 − P10 ${lateral === "carry" ? "landing" : "finishing"} left/right width. Lower means a narrower spread.`
-          : `${mode === "combined" ? "Daily" : "Session"} median and middle 80% of measured shots${metric === "side" ? ` · ${lateral === "carry" ? "landing" : "finishing"} left/right` : ""}.`}
-        {["side", "curve"].includes(metric) &&
-          " Below zero is left; above zero is right."}
-      </p>
-      {sessions.length ? (
+      <div className="trend-display-row">
+        <SegmentedControl
+          className="trend-display-control"
+          aria-label="Trend display"
+          value={display}
+          onChange={(value) => {
+            if (value === "priorities") onStopPlayback();
+            setDisplay(value);
+          }}
+          data={[
+            { value: "timeline", label: "Over time" },
+            { value: "compare", label: "Earlier vs recent" },
+            { value: "consistency", label: "Distance & consistency" },
+            { value: "relationships", label: "Shot relationships" },
+            { value: "priorities", label: "Practice priorities" },
+          ]}
+        />
+      </div>
+      {display === "timeline" && (
+        <p className="muted small">
+          {metric === "spread"
+            ? `${mode === "combined" ? "Daily" : "Session"} P90 − P10 ${lateral === "carry" ? "landing" : "finishing"} left/right width. Lower means a narrower spread.`
+            : `${mode === "combined" ? "Daily" : "Session"} median and middle 80% of measured shots${metric === "side" ? ` · ${lateral === "carry" ? "landing" : "finishing"} left/right` : ""}.`}
+          {["side", "curve"].includes(metric) &&
+            " Below zero is left; above zero is right."}
+        </p>
+      )}
+      {display === "priorities" ? (
+        <PrioritiesView shots={shots} />
+      ) : display === "relationships" ? (
+        <RelationshipsView
+          shots={selected}
+          unit={unit}
+          combined={mode === "combined"}
+          playbackDate={playbackDate}
+          onSelect={onSelect}
+        />
+      ) : display === "consistency" ? (
+        <ConsistencyView
+          shots={selected}
+          playbackDate={playbackDate}
+          unit={unit}
+          combined={mode === "combined"}
+          onSelect={onSelect}
+        />
+      ) : display === "compare" ? (
+        <PracticeComparison
+          shots={usable}
+          metric={metric}
+          unit={unit}
+          lateral={lateral}
+          combined={mode === "combined"}
+        />
+      ) : sessions.length ? (
         <TrendChart
           sessions={sessions}
           domainSessions={domainSessions}
@@ -282,7 +388,10 @@ export function Trends({
           <p>Choose another metric or adjust your selection.</p>
         </div>
       )}
-      <div className="availability trend-availability">
+      <div
+        className="availability trend-availability"
+        hidden={display !== "timeline"}
+      >
         <strong>
           {count} measured shots · {sessions.length}{" "}
           {mode === "combined"
@@ -301,7 +410,7 @@ export function Trends({
           <span>{small} session with fewer than 2 measurements</span>
         )}
       </div>
-      {sessions.length > 0 && (
+      {display === "timeline" && sessions.length > 0 && (
         <div className="legend trend-legend">
           {Object.entries(styles)
             .filter(([key]) => sessions.some((s) => s.context === key))
@@ -316,88 +425,99 @@ export function Trends({
             ))}
         </div>
       )}
-      {individual && metric !== "spread" && sessions.length > 0 && (
-        <div className="legend trend-legend">
-          <strong>Shots</strong>
-          {[
-            ...new Map(
-              sessions
-                .flatMap((s) => s.shots.map((p) => p.shot))
-                .sort(compareClubs)
-                .map((row) => [row[colorBy], row]),
-            ).entries(),
-          ].map(([value, row]) => (
-            <span key={value}>
-              <i
-                style={{
-                  background: color(
-                    value,
-                    all.map((s) => s[colorBy]),
-                  ),
-                }}
-              />
-              {colorBy === "club_id"
-                ? `${row.club_label} · ${row.set_id}`
-                : value}
-            </span>
-          ))}
-        </div>
-      )}
-      {sessions.length === 1 && (
-        <p className="muted small">
-          One date shows a snapshot, not a change over time.
-        </p>
-      )}
-      <details className="inline-help">
-        <summary>About this trend</summary>
-        <p className="chart-note">
-          Observed sessions. Ranges describe these shots, not uncertainty about
-          your next shot. Gaps have no estimated values.
-        </p>
-        {mode === "combined" && (
-          <p className="chart-note">
-            Each shot counts equally. Changing clubs or sources can change the
-            combined trend.
+      {display === "timeline" &&
+        individual &&
+        metric !== "spread" &&
+        sessions.length > 0 && (
+          <div className="legend trend-legend">
+            <strong>Shots</strong>
+            {[
+              ...new Map(
+                sessions
+                  .flatMap((s) => s.shots.map((p) => p.shot))
+                  .sort(compareClubs)
+                  .map((row) => [row[colorBy], row]),
+              ).entries(),
+            ].map(([value, row]) => (
+              <span key={value}>
+                <i
+                  style={{
+                    background: color(
+                      value,
+                      all.map((s) => s[colorBy]),
+                    ),
+                  }}
+                />
+                {colorBy === "club_id"
+                  ? `${row.club_label} · ${row.set_id}`
+                  : value}
+              </span>
+            ))}
+          </div>
+        )}
+      {!["consistency", "relationships", "priorities"].includes(display) &&
+        sessions.length === 1 && (
+          <p className="muted small">
+            One date shows a snapshot, not a change over time.
           </p>
         )}
-      </details>
-      {sessions.length > 0 && (
-        <details>
-          <summary>Session values</summary>
-          <Table.ScrollContainer minWidth={420}>
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Date</Table.Th>
-                  {mode === "separate" && <Table.Th>Group</Table.Th>}
-                  <Table.Th>Shots</Table.Th>
-                  <Table.Th>
-                    {metric === "spread" ? "Width" : "Median"} ({suffix})
-                  </Table.Th>
-                  {metric !== "spread" && <Table.Th>Middle 80%</Table.Th>}
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {sessions.map((s) => (
-                  <Table.Tr key={s.session}>
-                    <Table.Td>{s.date}</Table.Td>
-                    {mode === "separate" && (
-                      <Table.Td>{styles[s.context].label}</Table.Td>
-                    )}
-                    <Table.Td>{s.n}</Table.Td>
-                    <Table.Td>{format(s.median)}</Table.Td>
-                    {metric !== "spread" && (
-                      <Table.Td>
-                        {format(s.low)} – {format(s.high)}
-                      </Table.Td>
-                    )}
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </Table.ScrollContainer>
+      {!["consistency", "relationships", "priorities"].includes(display) && (
+        <details className="inline-help">
+          <summary>About this trend</summary>
+          <p className="chart-note">
+            Observed sessions. Ranges describe these shots, not uncertainty
+            about your next shot. Gaps have no estimated values.
+          </p>
+          {mode === "combined" && (
+            <p className="chart-note">
+              Each shot counts equally. Changing clubs or sources can change the
+              combined trend.
+            </p>
+          )}
         </details>
       )}
+      {!["consistency", "relationships", "priorities"].includes(display) &&
+        sessions.length > 0 && (
+          <details>
+            <summary>Session values</summary>
+            <Table.ScrollContainer minWidth={420}>
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Date</Table.Th>
+                    {mode === "separate" && <Table.Th>Group</Table.Th>}
+                    <Table.Th>Shots</Table.Th>
+                    <Table.Th>
+                      {metric === "spread" ? "Width" : "Median"} ({suffix})
+                    </Table.Th>
+                    {metric !== "spread" && <Table.Th>Middle 80%</Table.Th>}
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {sessions.map((s) => (
+                    <Table.Tr key={s.session}>
+                      <Table.Td>{s.date}</Table.Td>
+                      {mode === "separate" && (
+                        <Table.Td>{styles[s.context].label}</Table.Td>
+                      )}
+                      <Table.Td>{s.n}</Table.Td>
+                      <Table.Td>
+                        {metric === "smash"
+                          ? s.median.toFixed(2)
+                          : format(s.median)}
+                      </Table.Td>
+                      {metric !== "spread" && (
+                        <Table.Td>
+                          {format(s.low)} – {format(s.high)}
+                        </Table.Td>
+                      )}
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>
+          </details>
+        )}
     </>
   );
 }
@@ -553,7 +673,8 @@ function TrendChart({
         name: `${trendMetrics.find((m) => m.value === metric)!.label} (${suffix})`,
         nameTextStyle: { align: "left" },
         axisLabel: {
-          formatter: (value: number) => String(Number(value.toFixed(1))),
+          formatter: (value: number) =>
+            String(Number(value.toFixed(metric === "smash" ? 2 : 1))),
         },
         splitLine: { lineStyle: { color: "#e5e6db" } },
       },
@@ -578,10 +699,10 @@ function TrendChart({
           };
           if (point.data.shot) {
             const shot = point.data.shot;
-            return `${shot.session_date}\n${shot.club_label} · ${shot.set_id} · ${shot.source}\n${shot.shot_id}\n${point.data.measurement!.toFixed(1)} ${suffix}`;
+            return `${shot.session_date}\n${shot.club_label} · ${shot.set_id} · ${shot.source}\n${shot.shot_id}\n${point.data.measurement!.toFixed(metric === "smash" ? 2 : 1)} ${suffix}`;
           }
           const s = point.data.summary!;
-          return `${s.date}\n${styles[s.context].label}\n${s.n} measured shots\n${metric === "spread" ? "Width" : "Median"}: ${s.median.toFixed(1)} ${suffix}${s.low !== null ? `\nMiddle 80%: ${s.low.toFixed(1)} – ${s.high!.toFixed(1)} ${suffix}` : ""}`;
+          return `${s.date}\n${styles[s.context].label}\n${s.n} measured shots\n${metric === "spread" ? "Width" : "Median"}: ${s.median.toFixed(metric === "smash" ? 2 : 1)} ${suffix}${s.low !== null ? `\nMiddle 80%: ${s.low.toFixed(metric === "smash" ? 2 : 1)} – ${s.high!.toFixed(metric === "smash" ? 2 : 1)} ${suffix}` : ""}`;
         },
       },
       series,

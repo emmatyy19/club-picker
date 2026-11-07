@@ -250,3 +250,11 @@ folder)**, and press F5. The checked-in launch configuration uses the workspace
 stepping through the importer. Run `uv sync --locked --all-groups` first if the
 environment is missing; debugging requires the editor's Python Debugger extension.
 No session dates, report URLs or personal paths are stored in the launch config.
+
+Club speed is now included when the selected Trackman measurement block provides
+it. Rerun the same preview/apply commands for a cached report to fill previously
+missing club speed. The preview reports `enriched_shots` separately from new
+shots. Existing measurements and identities must match; enrichment never
+replaces a known speed, and apply creates the normal snapshot backup. Missing
+club speeds remain unknown. Older manually extracted rows still require source
+identity reconciliation before reimport.

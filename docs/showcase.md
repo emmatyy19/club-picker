@@ -118,3 +118,11 @@ finish target, 100-yard must-carry distance, and 105–120-yard landing area.
 The shots and dates are synthetic, not real course outcomes.
 
 ![Current approach picker with synthetic carry and finish comparisons](images/synthetic-approach.jpg)
+
+Ball speed, spin and launch angle in the demo are entirely invented to exercise
+the Shot relationships controls. Their correlations are illustrative, not
+measured relationships from my practice or a validated ball-flight model.
+
+The strike-efficiency demo also uses invented club speeds, generated with a
+separate fixed random seed. Their ratios and relationships illustrate the UI;
+they are not estimates of my measured strike efficiency.
