@@ -8,60 +8,55 @@ transparent statistics. More complicated models need to earn their place.
 
 | Area | Current behavior |
 | --- | --- |
-| Data foundation | Validated manual CSV imports, private SQLite storage, duplicate checks, and a data audit |
-| Trackman | Reusable shared-report importer with review and repeat-import handling; no account sync |
-| Toptracer | Reviewed screenshot extraction into numeric records; no general automated screenshot importer |
-| My Shots | Carry/total charts, overhead view, dispersion, tag filters, date ranges and playback, trends, rankings, and shot inspection |
-| Club identity | Two physical sets remain distinct, with explicit options to combine selected data for exploration |
-| Approach picker | Finish target against reported total, optional must-carry and landing window, full/recorded partial swings, observed ranges and support |
-| Showcase | Invented shots generated from published performance aggregates, local demo mode, and screenshots |
+| Data foundation | Validated manual CSV imports, private SQLite storage, duplicate checks, and an audit |
+| Trackman | Reusable shared-report importer with preview and repeat-import handling; no account sync |
+| Toptracer | Reviewed screenshot extraction into numeric records |
+| My Shots | Carry/total charts, overhead view, dispersion, tag filters, recent-date shortcuts, playback, trends, rankings, and shot inspection |
+| Club identity | Physical sets remain distinct, with explicit options to combine selected data for exploration |
+| Approach picker | Finish target, optional carry/landing constraints, rangefinder inputs, recorded swing intent and observed support; sources combine within each set by default |
+| Phone | Static installable app, device-local library import and backups, cached assets, and offline support; device gesture checks remain distinct from browser layout checks |
+| Public showcase | Hosted app starts with invented shots; merging to main automatically deploys application changes without publishing the private library |
+| Evaluation | Chronological carry backtests, range diagnostics and a completed Ridge experiment; the trained candidate was not adopted |
+| Practice insights | Interactive earlier-versus-recent bands in Trends and club-gap bands in Distances; optional reference reports |
 
-The [import guide](data-import.md), [explorer guide](explorer.md), and
-[approach milestone](journey/004-a-first-approach-picker.md) describe these paths.
-The app runs locally. A laptop development server is not an installed offline
-phone app. No recommendation has been validated as a future-shot prediction,
-and no trained model or scoring improvement has been demonstrated.
+The [import guide](data-import.md), [explorer guide](explorer.md),
+[phone guide](phone.md), and [practice insights guide](practice-insights.md)
+describe these paths. No recommendation has demonstrated on-course scoring
+improvement or been established as a calibrated next-shot safety estimate.
 
-## Next: make it useful and test it
+## Next: focused practice and clearer context
 
-I want to try the approach workflow with real decisions and evaluate the
-baseline on later practice sessions. That means checking distance error, range
-coverage, and failure cases, with sessions kept together chronologically.
-Observed clearance percentages are a starting description, not a safety claim.
+The first [practice review](journey/009-looking-for-useful-practice-patterns.md)
+is complete. Comparisons now live in Trends, and distance bands with shared-date
+gaps live in Distances. I can explore these using the same filters and dates as
+my shots. Next, practice annotations and a measurable goal should make later
+comparisons easier to interpret, especially across different swing types.
 
-An [interactive synthetic demo](demo.md) now has a static GitHub Pages build
-and a manual deployment workflow, without an account system. Deployment is
-still pending. Personal-file import needs clearer demo/data labeling and storage
-controls before I advertise it as a public feature.
+A bounded shot-pattern experiment can follow: compare simple visual descriptions
+with clusters of compatible speed/flight measurements, then check whether the
+patterns recur on later practice dates. This is planned. Current-shot launch
+measurements can describe a recorded shot but cannot be pre-shot inputs to the
+caddie. Training and tuning use earlier dates; any untouched final check needs
+newly reserved data. A negative result is still a completed learning exercise.
 
 ## From distance to risk
 
-The current carry window is one-dimensional. Next I want to compare paired
-landing outcomes against a target area, with explicit costs for short, long,
-left, and right misses. Missing lateral landing measurements limit what I can
-claim. Reported total does not model today's ground conditions.
+The current carry window is one-dimensional. A future spatial model could compare
+paired landing outcomes against a target area, with explicit costs for short,
+long, left and right misses. Missing lateral landing measurements limit those
+claims. Reported total does not model today's ground conditions.
 
 Course feedback will matter before I trust practice-to-course adjustments or
-claim better scoring. Expected strokes requires evidence about the shots that
-follow, not just a distance chart.
+claim better scoring. Expected strokes requires evidence about shots played
+afterward, not just a distance chart.
 
-## Learning to model my game
+## Longer-term ideas
 
-I plan to compare stable and recent-session baselines with regularized
-regression and quantile models. Bayesian partial pooling is an optional deeper
-experiment. The [modeling approach](approach.md) explains these questions.
+Quantile models and Bayesian partial pooling remain possible learning experiments,
+subject to chronological evaluation. The [modeling approach](approach.md) records
+their intended questions and the completed regression comparison.
 
-Training and tuning use earlier sessions; later evaluation stays separate.
-A model that loses to a simpler baseline can still be a useful learning result.
-There are no completed model experiments yet.
-
-## Delivery and longer-term ideas
-
-An installable phone experience needs saved data, cached assets, and a tested
-cold start without a connection. Hosting a demo alone does not provide that.
-Accounts and automatic sync are optional, separate work.
-
-I would also like to try concise advice through my Meta Ray-Ban Display glasses.
-Course photos might support a later vision experiment, but recognizing a tree
-or fairway does not establish its distance, width, or required clearance.
-Measured geometry and supported flight information must come first.
+Camera input, course geometry, voice and glasses remain future work. They should
+reuse calculated recommendation results rather than invent probabilities. Maps,
+weather adjustments, accounts and cloud synchronization need a concrete reason
+and their own validation before adding infrastructure.

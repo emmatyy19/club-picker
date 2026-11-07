@@ -39,6 +39,7 @@ export const shotSchema = z
     normalization_settings: text,
     ball_type: text,
     surface: text,
+    club_speed_mps: value.nonnegative().nullable().optional(),
     ball_speed_mps: value.nonnegative().nullable().optional(),
     spin_rpm: value.nonnegative().nullable().optional(),
     launch_deg: value.min(-90).max(90).nullable().optional(),

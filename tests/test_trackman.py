@@ -152,7 +152,7 @@ def test_unknown_club_and_settings(report):
         report_settings(URL.replace("https:", "http:"))
 
 
-def test_cli_preview_apply_backup_and_conflict(tmp_path: Path, report):
+def test_cli_preview_apply_backup_and_conflict(tmp_path: Path, report, capsys):
     """Preview stays read-only, writes preserve old rows, and repeat imports do nothing."""
     folder = tmp_path / "raw"
     folder.mkdir()
@@ -180,6 +180,25 @@ def test_cli_preview_apply_backup_and_conflict(tmp_path: Path, report):
     assert snapshot.read_bytes() == original
     assert main([*args, "--apply"]) == 0
     assert next((tmp_path / "backups").glob("*.json")).read_bytes() == original
+    # A cached report can enrich only the new optional field without adding shots.
+    for stroke in report["StrokeGroups"][0]["Strokes"]:
+        stroke["NormalizedMeasurement"]["ClubSpeed"] = 30
+    cached = json.loads(cache.read_text())
+    cached["report"] = report
+    cache.write_text(json.dumps(cached))
+    before_enrichment = snapshot.read_bytes()
+    capsys.readouterr()
+    assert main(args) == 0
+    preview = json.loads(capsys.readouterr().out)
+    assert (preview["new_shots"], preview["enriched_shots"], preview["duplicates"]) == (
+        0,
+        2,
+        0,
+    )
+    assert snapshot.read_bytes() == before_enrichment
+    assert main([*args, "--apply"]) == 0
+    assert len(json.loads(snapshot.read_text())["shots"]) == 2
+    assert json.loads(snapshot.read_text())["shots"][0]["club_speed_mps"] == 30
     imported = snapshot.read_bytes()
     modified = snapshot.stat().st_mtime_ns
     assert main([*args, "--apply"]) == 0
@@ -218,3 +237,45 @@ def test_fetch_redirect_and_payload(monkeypatch, report):
     }
     with pytest.raises(ValueError, match="Unsupported"):
         request("https://example.com/private")
+
+
+def test_club_speed_enrichment_is_optional_and_idempotent(report):
+    """Add a newly supported field without changing identity or existing values."""
+    original = parse(report)
+    for stroke in report["StrokeGroups"][0]["Strokes"]:
+        stroke["Measurement"]["ClubSpeed"] = 20
+        stroke["NormalizedMeasurement"]["ClubSpeed"] = 30
+    incoming = parse(report)
+    assert incoming["shots"][0]["club_speed_mps"] == 30
+    assert (
+        parse(report, URL.replace("nd=true", "nd=false"))["shots"][0]["club_speed_mps"]
+        == 20
+    )
+    for row in original["shots"]:
+        del row["club_speed_mps"]
+    before = copy.deepcopy(original)
+    enriched, added = merge_snapshot(original, incoming["shots"])
+    assert added == 0
+    assert original == before
+    assert enriched["shots"][0]["club_speed_mps"] == 30
+    assert merge_snapshot(enriched, incoming["shots"])[0] == enriched
+    assert merge_snapshot(enriched, before["shots"])[0] == enriched
+    changed = copy.deepcopy(incoming["shots"])
+    changed[0]["club_speed_mps"] = 31
+    with pytest.raises(ValueError, match="Conflicting shot"):
+        merge_snapshot(enriched, changed)
+    changed = copy.deepcopy(incoming["shots"])
+    changed[1]["carry_m"] = 101
+    with pytest.raises(ValueError, match="Conflicting shot"):
+        merge_snapshot(original, changed)
+    assert original == before
+
+
+@pytest.mark.parametrize("speed", [-1, True, float("inf")])
+def test_invalid_club_speed(report, speed):
+    """Do not accept invalid provider speeds."""
+    report["StrokeGroups"][0]["Strokes"][0]["NormalizedMeasurement"]["ClubSpeed"] = (
+        speed
+    )
+    with pytest.raises(ValueError):
+        parse(report)

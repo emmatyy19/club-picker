@@ -16,6 +16,7 @@ from club_picker.explorer import Snapshot, explorer_snapshot
 from club_picker.shots import parse_shot
 
 FLIGHT = {
+    "club_speed_mps": "ClubSpeed",
     "ball_speed_mps": "BallSpeed",
     "spin_rpm": "SpinRate",
     "launch_deg": "LaunchAngle",
@@ -250,7 +251,7 @@ def merge_snapshot(
             for v in value.values()
         ):
             raise ValueError("Invalid explorer row")
-        row = cast(dict[str, str | float | None], value)
+        row = cast(dict[str, str | float | None], value.copy())
         source, session, shot = (
             text_value(row.get(k)) for k in ("source", "session_id", "shot_id")
         )
@@ -283,8 +284,26 @@ def merge_snapshot(
         if identity in seen:
             if index < len(originals):
                 raise ValueError("Existing library contains duplicate identities")
-            if seen[identity] != row:
+            previous = seen[identity]
+            # Optional schema enrichment only: never replace an existing speed or
+            # change any other value while revisiting an already imported swing.
+            old_speed = previous.get("club_speed_mps")
+            new_speed = row.get("club_speed_mps")
+            comparable_old = {
+                k: v for k, v in previous.items() if k != "club_speed_mps"
+            }
+            comparable_new = {k: v for k, v in row.items() if k != "club_speed_mps"}
+            if comparable_old != comparable_new or (
+                old_speed is not None
+                and new_speed is not None
+                and old_speed != new_speed
+            ):
                 raise ValueError("Conflicting shot identity; library left unchanged")
+            if old_speed is None and new_speed is not None:
+                speed = number(new_speed)
+                if speed is None or speed < 0:
+                    raise ValueError("Invalid club_speed_mps")
+                previous["club_speed_mps"] = speed
             continue
         seen[identity] = row
         rows.append(row)

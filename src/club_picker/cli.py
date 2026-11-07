@@ -22,6 +22,7 @@ from club_picker.shots import (
 )
 from club_picker.storage import Store
 from club_picker.trackman import (
+    array_value,
     merge_snapshot,
     object_value,
     parse_report,
@@ -87,6 +88,12 @@ def main(argv: list[str] | None = None) -> int:
     trackman.add_argument(
         "--refetch", action="store_true", help="Refresh the private report cache"
     )
+    insights = commands.add_parser(
+        "insights", help="Create private practice changes and club-gap reports"
+    )
+    insights.add_argument("snapshot", type=Path)
+    insights.add_argument("--output", type=Path, default=Path("runs/practice-insights"))
+    insights.add_argument("--unit", choices=["yd", "m"], default="yd")
     evaluation = commands.add_parser(
         "evaluate", help="Create a chronological carry backtest"
     )
@@ -128,6 +135,24 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             return 0
+        if args.command == "insights":
+            from club_picker.practice_report import write_practice
+
+            report = write_practice(args.snapshot, args.output, unit=args.unit)
+            print(
+                json.dumps(
+                    {
+                        "shots": report.shots,
+                        "club_contexts": len(report.groups),
+                        "carry_comparisons": sum(
+                            g.comparisons["carry_m"].prior is not None
+                            for g in report.groups
+                        ),
+                        "output": str(args.output),
+                    }
+                )
+            )
+            return 0
         if args.command == "evaluate":
             result = write_report(args.snapshot, args.output)
             print(
@@ -154,14 +179,23 @@ def main(argv: list[str] | None = None) -> int:
                 }
             )
             merged, added = merge_snapshot(existing, batch["shots"])
-            if args.apply and added:
+            original_rows = array_value(existing.get("shots"))
+            enriched = sum(
+                object_value(before).get("club_speed_mps") is None
+                and after.get("club_speed_mps") is not None
+                for before, after in zip(
+                    original_rows, merged["shots"][: len(original_rows)], strict=True
+                )
+            )
+            if args.apply and (added or enriched):
                 save_snapshot(args.snapshot, merged)
             print(
                 json.dumps(
                     {
                         "report_shots": len(batch["shots"]),
                         "new_shots": added,
-                        "duplicates": len(batch["shots"]) - added,
+                        "enriched_shots": enriched,
+                        "duplicates": len(batch["shots"]) - added - enriched,
                         "library_shots": len(merged["shots"]),
                         "applied": bool(args.apply),
                         "clubs": sorted(

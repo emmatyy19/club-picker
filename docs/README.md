@@ -44,3 +44,5 @@ data.
 - [Using My Caddie on my phone](phone.md): device-local imports, offline setup, backups, and verification limits.
 
 Latest interface milestone: [A softer caddie](journey/008-a-softer-caddie.md).
+
+Latest analysis milestone: [Looking for useful practice patterns](journey/009-looking-for-useful-practice-patterns.md). The [practice insights guide](practice-insights.md) describes rerunnable readiness, improvement and club-gap reports.
