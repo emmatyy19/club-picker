@@ -207,3 +207,17 @@ block in SI units. Reimporting a matching report can fill this previously absent
 field without duplicating shots. Every other imported value must still match;
 changed existing speeds remain conflicts. Legacy table-only rows cannot be
 matched by label or approximate distance and remain unenriched.
+
+
+## Bag consistency
+
+In Rankings I pick a club set and compare carry distances or signed finishing
+offsets. Every row uses one physical club and measurement context. The band
+shows its middle 80% and the dot marks its median. Direction uses the aim line
+as zero. Rows start in bag order and can also be sorted by width.
+
+The current width uses up to three latest eligible dates within the selection.
+Five usable measurements qualify a date. When every date is sparse, the row
+shows up to three observed dates with a small-sample label. Six eligible dates
+allow a comparison with the preceding three, giving each date equal weight.
+Expanding the row shows the windows and lets me inspect the underlying shots.

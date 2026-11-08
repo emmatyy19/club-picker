@@ -29,8 +29,8 @@ improvement or been established as a calibrated next-shot safety estimate.
 The first [practice review](journey/009-looking-for-useful-practice-patterns.md)
 is complete. Comparisons now live in Trends, and distance bands with shared-date
 gaps live in Distances. I can explore these using the same filters and dates as
-my shots. Next, practice annotations and a measurable goal should make later
-comparisons easier to interpret, especially across different swing types.
+my shots. Rankings now shows consistency across my bag. I can compare carry spread or
+finishing direction with each club’s earlier practice. Goal tracking is deferred.
 
 A bounded shot-pattern experiment can follow: compare simple visual descriptions
 with clusters of compatible speed/flight measurements, then check whether the

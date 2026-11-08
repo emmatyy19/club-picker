@@ -888,6 +888,7 @@ export function App() {
                   </div>
                   {prefs.view === "rankings" ? (
                     <Rankings
+                      onSelect={setSelected}
                       settings={chartSettings}
                       unitsControl={chartUnits}
                       playbackControl={<Playback controller={playback} />}
