@@ -1,3 +1,4 @@
+import { BagConsistency } from "./BagConsistencyView";
 import { ChartTools } from "./ChartTools";
 import { useState, type ReactNode } from "react";
 import {
@@ -31,7 +32,9 @@ export function Rankings({
   settings,
   unitsControl,
   playbackControl,
+  onSelect,
 }: {
+  onSelect: (key: string) => void;
   settings: ReactNode;
   unitsControl: ReactNode;
   playbackControl: ReactNode;
@@ -42,6 +45,47 @@ export function Rankings({
   onLateralChange: (metric: Metric) => void;
   colorBy: Dimension;
 }) {
+  const [view, setView] = useState("bag");
+  return (
+    <>
+      {playbackControl}
+      <div className="plot-controls ranking-controls">
+        {unitsControl}
+        <div className="control-field">
+          <span className="control-label">View</span>
+          <SegmentedControl
+            aria-label="Rankings view"
+            value={view}
+            onChange={setView}
+            data={[
+              { value: "bag", label: "Bag consistency" },
+              { value: "stats", label: "Rank by stat" },
+            ]}
+          />
+        </div>
+      </div>
+      {view === "bag" ? (
+        <BagConsistency shots={shots} unit={unit} onSelect={onSelect} />
+      ) : (
+        <StatRankings
+          {...{ shots, all, unit, lateral, onLateralChange, colorBy, settings }}
+        />
+      )}
+    </>
+  );
+}
+function StatRankings({
+  shots,
+  all,
+  unit,
+  lateral,
+  onLateralChange,
+  colorBy,
+  settings,
+}: Omit<
+  Parameters<typeof Rankings>[0],
+  "unitsControl" | "playbackControl" | "onSelect"
+>) {
   const [metric, setMetric] = useState<RankingMetric>("carry");
   const [statistic, setStatistic] = useState<RankingStat>("range");
   const [detail, setDetail] = useState<Shot | null>(null);
@@ -80,9 +124,7 @@ export function Rankings({
           : "Median";
   return (
     <>
-      {playbackControl}
       <div className="plot-controls ranking-controls">
-        {unitsControl}
         <Select
           size="xs"
           label="Measurement"
