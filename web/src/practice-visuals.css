@@ -795,10 +795,9 @@
 .bag-summary {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(74px, 0.8fr) minmax(60px, 1.7fr) minmax(
-      96px,
-      1fr
-    ) minmax(90px, 1fr) 12px;
+  grid-template-columns:
+    minmax(74px, 0.8fr) minmax(60px, 1.7fr) minmax(96px, 1fr)
+    minmax(90px, 1fr) 12px;
   align-items: center;
   gap: 14px;
   padding: 14px;
