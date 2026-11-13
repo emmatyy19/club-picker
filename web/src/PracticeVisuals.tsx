@@ -31,6 +31,50 @@ function comparisonRange(
     ? [Math.min(range[0], 0), Math.max(range[1], 0)]
     : range;
 }
+export function BagWindowBands({
+  recent,
+  earlier,
+  side,
+  unit,
+}: {
+  recent: Distribution;
+  earlier: Distribution | null;
+  side: boolean;
+  unit: Unit;
+}) {
+  const windows = earlier ? [earlier, recent] : [recent];
+  const [low, high] = domain(windows);
+  const extent = Math.max(Math.abs(low), Math.abs(high));
+  const range: readonly [number, number] = side
+    ? [-extent, extent]
+    : [low, high];
+  return (
+    <section
+      aria-label={side ? "Finishing left/right comparison" : "Carry comparison"}
+    >
+      <Axis range={range} suffix={unit} />
+      {earlier && (
+        <Band
+          label="Earlier"
+          summary={earlier}
+          range={range}
+          suffix={unit}
+          target={side}
+        />
+      )}
+      <Band
+        label="Recent"
+        summary={recent}
+        range={range}
+        suffix={unit}
+        recent
+        target={side}
+      />
+      {!earlier && <p>Six eligible dates are needed to compare periods.</p>}
+    </section>
+  );
+}
+
 function Axis({
   range,
   suffix,

@@ -221,3 +221,10 @@ Five usable measurements qualify a date. When every date is sparse, the row
 shows up to three observed dates with a small-sample label. Six eligible dates
 allow a comparison with the preceding three, giving each date equal weight.
 Expanding the row shows the windows and lets me inspect the underlying shots.
+
+The default **Both** view puts carry spread and finishing left/right spread next
+to each other. A club can tighten in carry while spreading out sideways. Each
+measurement uses its own eligible dates. Select either width to inspect its
+dates, typical result and contributing shots.
+Earlier and recent bands share a scale, with a dot for each median. For
+direction, zero marks the aim line. Opening a band shows its endpoints and dates.
