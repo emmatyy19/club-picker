@@ -228,3 +228,12 @@ measurement uses its own eligible dates. Select either width to inspect its
 dates, typical result and contributing shots.
 Earlier and recent bands share a scale, with a dot for each median. For
 direction, zero marks the aim line. Opening a band shows its endpoints and dates.
+
+## Latest session recap
+
+In My Shots, **Latest session** shows each club I hit on that practice date.
+The recap compares that day's middle 80% carry and finishing left/right widths
+with the previous three eligible dates for the same club, set and measurement
+context. Tags apply to both periods. Each metric needs five usable readings
+per date and each earlier date gets equal weight. Selecting a change opens
+the two bands on a common scale.

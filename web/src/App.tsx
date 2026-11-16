@@ -37,6 +37,7 @@ import { Trends } from "./TrendView";
 import { Rankings } from "./RankingView";
 import { trendMetrics, trendUnit, trendValue } from "./trends";
 import { Timeline } from "./Timeline";
+import { SessionRecap } from "./SessionRecapView";
 import { RecentSessions } from "./RecentSessions";
 import { Playback, useDatePlayback } from "./DatePlayback";
 import { playbackDates } from "./playback";
@@ -327,6 +328,17 @@ export function App() {
     [all],
   );
   const filtered = useMemo(() => filterShots(all, filters), [all, filters]);
+  const latestDate = useMemo(
+    () =>
+      all.reduce(
+        (latest, shot) =>
+          shot.session_date && shot.session_date > latest
+            ? shot.session_date
+            : latest,
+        "",
+      ),
+    [all],
+  );
   const baseDates = useMemo(
     () =>
       playbackDates(
@@ -789,6 +801,18 @@ export function App() {
                   >
                     Clear filters & dates
                   </Button>
+                  {latestDate &&
+                    filters.start === latestDate &&
+                    filters.end === latestDate &&
+                    !filters.session &&
+                    !filters.undated && (
+                      <SessionRecap
+                        shots={all}
+                        date={latestDate}
+                        filters={filters}
+                        unit={prefs.unit}
+                      />
+                    )}
                   {prefs.view !== "trends" && prefs.view !== "rankings" && (
                     <Playback controller={playback} />
                   )}

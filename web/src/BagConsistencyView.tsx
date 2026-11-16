@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState } from "react";
 import { Checkbox, SegmentedControl, Select } from "@mantine/core";
 import { bagConsistency, type BagMetric } from "./bagConsistency";
 import { type Shot, type Unit, shotKey } from "./data";
@@ -7,21 +7,7 @@ import { MeasurementContext } from "./MeasurementContext";
 
 import { BagWindowBands } from "./PracticeVisuals";
 
-function SpreadChange({ delta, unit }: { delta: number; unit: Unit }) {
-  if (Number(delta.toFixed(1)) === 0)
-    return <span className="spread-unchanged">Same width</span>;
-  const direction = delta < 0 ? "narrower" : "wider";
-  const yards = Math.abs(delta) / (unit === "m" ? 0.9144 : 1);
-  const intensity = Math.min(yards / 10, 1);
-  return (
-    <span
-      className={`spread-change spread-${direction}`}
-      style={{ "--spread-strength": `${intensity * 100}%` } as CSSProperties}
-    >
-      {Math.abs(delta).toFixed(1)} {unit} {direction}
-    </span>
-  );
-}
+import { SpreadChange } from "./SpreadChange";
 
 export function BagConsistency({
   shots,
@@ -67,7 +53,7 @@ export function BagConsistency({
     <section className="bag-consistency">
       <div className="bag-controls">
         {sets.length > 0 && (
-          <div>
+          <div className="bag-control-field">
             <span className="control-label">Club set</span>
             <SegmentedControl
               aria-label="Consistency club set"
@@ -77,7 +63,7 @@ export function BagConsistency({
             />
           </div>
         )}
-        <div>
+        <div className="bag-control-field">
           <span className="control-label">Control</span>
           <SegmentedControl
             aria-label="Consistency measurement"

@@ -34,11 +34,15 @@ function comparisonRange(
 export function BagWindowBands({
   recent,
   earlier,
+  recentLabel = "Recent",
+  earlierLabel = "Earlier",
   side,
   unit,
 }: {
   recent: Distribution;
   earlier: Distribution | null;
+  recentLabel?: string;
+  earlierLabel?: string;
   side: boolean;
   unit: Unit;
 }) {
@@ -55,7 +59,7 @@ export function BagWindowBands({
       <Axis range={range} suffix={unit} />
       {earlier && (
         <Band
-          label="Earlier"
+          label={earlierLabel}
           summary={earlier}
           range={range}
           suffix={unit}
@@ -63,7 +67,7 @@ export function BagWindowBands({
         />
       )}
       <Band
-        label="Recent"
+        label={recentLabel}
         summary={recent}
         range={range}
         suffix={unit}
