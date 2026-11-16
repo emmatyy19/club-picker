@@ -32,12 +32,10 @@ gaps live in Distances. I can explore these using the same filters and dates as
 my shots. Rankings now shows consistency across my bag. I can compare carry spread or
 finishing direction with each club’s earlier practice. Goal tracking is deferred.
 
-A bounded shot-pattern experiment can follow: compare simple visual descriptions
-with clusters of compatible speed/flight measurements, then check whether the
-patterns recur on later practice dates. This is planned. Current-shot launch
-measurements can describe a recorded shot but cannot be pre-shot inputs to the
-caddie. Training and tuning use earlier dates; any untouched final check needs
-newly reserved data. A negative result is still a completed learning exercise.
+I tested two speed and launch clusters against a simple speed split on one
+7-iron. The speed split described the next three historical dates better.
+I kept the existing chart. The [experiment record](journey/010-testing-shot-patterns.md)
+includes the comparison and rerun command.
 
 ## From distance to risk
 
