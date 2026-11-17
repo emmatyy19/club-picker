@@ -1,3 +1,4 @@
+import { targetBounds, type TargetSize } from "./practiceTarget";
 import { chartTheme } from "./design/chartTheme";
 import { ChartTouchControl } from "./ChartTouchControl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +17,7 @@ import {
   GridComponent,
   TooltipComponent,
   MarkLineComponent,
+  MarkAreaComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import {
@@ -40,9 +42,11 @@ echarts.use([
   GridComponent,
   TooltipComponent,
   MarkLineComponent,
+  MarkAreaComponent,
   CanvasRenderer,
 ]);
 export function ShotChart({
+  target,
   corridorWidthM = 36.576,
   shots,
   all,
@@ -55,6 +59,7 @@ export function ShotChart({
   selected,
   onSelect,
 }: {
+  target?: TargetSize;
   corridorWidthM?: number;
   shots: Shot[];
   all: Shot[];
@@ -131,6 +136,8 @@ export function ShotChart({
       .filter((v): v is number => v !== null);
     const maxY = Math.max(50, ...values) * 1.12,
       maxX = Math.ceil((Math.max(20, ...sides.map(Math.abs)) * 1.2) / 10) * 10;
+    const box =
+      target && view === "overhead" ? targetBounds(target, unit) : null;
     const series: (ScatterSeriesOption | LineSeriesOption)[] = [];
     for (const contour of contours) {
       series.push({
@@ -168,6 +175,22 @@ export function ShotChart({
           borderWidth: 1,
         },
       })),
+      markArea: box
+        ? {
+            silent: true,
+            itemStyle: {
+              color: "rgba(112,161,95,0.18)",
+              borderColor: "#64845a",
+              borderWidth: 1,
+            },
+            data: [
+              [
+                { xAxis: box.left, yAxis: box.near },
+                { xAxis: box.right, yAxis: box.far },
+              ],
+            ],
+          }
+        : undefined,
       markLine:
         view !== "distance"
           ? {
@@ -198,8 +221,8 @@ export function ShotChart({
       const bounds = overheadBounds(
         plotWidth,
         plotHeight,
-        maxX,
-        Math.ceil(maxY / 10) * 10,
+        Math.max(maxX, (box?.right ?? 0) * 1.1),
+        Math.max(Math.ceil(maxY / 10) * 10, (box?.far ?? 0) * 1.1),
       );
       const nav = navigation.current;
       setZoom(1 / nav.scale);
@@ -494,6 +517,7 @@ export function ShotChart({
     };
   }, [
     corridorWidthM,
+    target,
     shots,
     all,
     metric,

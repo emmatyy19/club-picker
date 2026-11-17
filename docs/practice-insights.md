@@ -237,3 +237,16 @@ with the previous three eligible dates for the same club, set and measurement
 context. Tags apply to both periods. Each metric needs five usable readings
 per date and each earlier date gets equal weight. Selecting a change opens
 the two bands on a common scale.
+
+## Practice target
+
+In Overhead, turn on **Practice target** to compare two clubs from one set.
+The shaded rectangle is centered on the aim line. Target distance starts at 130 yd. Change it to place
+the middle of the rectangle at your chosen forward distance. Width runs left to right and depth runs front to back.
+The first view uses total distance. Switching to carry compares landing points
+where the provider supplies usable landing geometry.
+
+The fraction counts displayed shots inside or on the rectangle divided by all
+plotted shots for that club. Each shot counts once. The supporting counts show
+how many selected shots could be plotted and how many known practice dates
+they cover. Tags and playback narrow the sample.
