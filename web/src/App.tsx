@@ -1,3 +1,5 @@
+import { PracticeTargetControls } from "./PracticeTargetControls";
+import { initialTarget, targetClubs } from "./practiceTarget";
 import { RolloutView } from "./RolloutView";
 import { MissPatterns } from "./MissPatterns";
 import { ChartTools } from "./ChartTools";
@@ -139,6 +141,11 @@ function preferences(): Preferences {
 }
 export function App() {
   const phone = import.meta.env.MODE === "phone";
+  const [showTarget, setShowTarget] = useState(false);
+  const [target, setTarget] = useState(initialTarget);
+  const [targetSet, setTargetSet] = useState("set-a");
+  const [targetFirst, setTargetFirst] = useState("");
+  const [targetSecond, setTargetSecond] = useState("");
   const [corridorWidthM, setCorridorWidthM] = useState(36.576);
   const [personalDevice, setPersonalDevice] = useState(false);
   const [distanceDisplay, setDistanceDisplay] = useState("ranges");
@@ -184,7 +191,7 @@ export function App() {
   }, [filters]);
   const [confirmed, setConfirmed] = useState(false),
     [setNames, setSetNames] = useState<Record<string, string>>({});
-  const [page, setPage] = useState(0),
+  const [requestedPage, setPage] = useState(0),
     [savedView, setSavedView] = useState<Filters | null>(null);
   const compactScreen = useMediaQuery("(max-width: 760px)");
   const [workspace, setWorkspace] = useState("shots");
@@ -339,18 +346,35 @@ export function App() {
       ),
     [all],
   );
+  const targeting = showTarget && prefs.view === "overhead";
+  const choice = useMemo(
+    () => targetClubs(filtered, targetSet, targetFirst, targetSecond),
+    [filtered, targetSet, targetFirst, targetSecond],
+  );
+  const comparisonShots = useMemo(
+    () =>
+      targeting
+        ? filtered.filter(
+            (s) =>
+              s.set_id === choice.set &&
+              (s.club_id === choice.a?.club_id ||
+                s.club_id === choice.b?.club_id),
+          )
+        : filtered,
+    [targeting, filtered, choice],
+  );
   const baseDates = useMemo(
     () =>
       playbackDates(
         plottedShots(
-          filtered,
+          comparisonShots,
           prefs.metric,
           prefs.view === "trends" || prefs.view === "rankings"
             ? "distance"
             : prefs.view,
         ),
       ),
-    [filtered, prefs.metric, prefs.view],
+    [comparisonShots, prefs.metric, prefs.view],
   );
   const dates =
     prefs.view === "trends" && trendDates !== null ? trendDates : baseDates;
@@ -359,14 +383,16 @@ export function App() {
   const matched = useMemo(
     () =>
       playbackDate === null
-        ? filtered
-        : filtered.filter((s) =>
+        ? comparisonShots
+        : comparisonShots.filter((s) =>
             prefs.view === "trends"
               ? s.session_date !== null && s.session_date <= playbackDate
               : s.session_date === playbackDate,
           ),
-    [filtered, playbackDate, prefs.view],
+    [comparisonShots, playbackDate, prefs.view],
   );
+  const pageCount = Math.max(1, Math.ceil(matched.length / 20));
+  const page = Math.min(requestedPage, pageCount - 1);
   const usable = matched.filter((s) => s.quality === "usable");
   const measured = usable.filter(
     (s) => distance(s, prefs.metric, prefs.unit) !== null,
@@ -951,6 +977,32 @@ export function App() {
                     />
                   ) : (
                     <>
+                      {prefs.view === "overhead" && (
+                        <div className="overhead-target-controls">
+                          <Checkbox
+                            label="Practice target"
+                            checked={showTarget}
+                            onChange={(e) => {
+                              setShowTarget(e.currentTarget.checked);
+                              if (e.currentTarget.checked)
+                                updatePrefs({ metric: "total" });
+                            }}
+                          />
+                          {targeting && (
+                            <PracticeTargetControls
+                              size={target}
+                              onSize={setTarget}
+                              choice={choice}
+                              onSet={setTargetSet}
+                              onFirst={setTargetFirst}
+                              onSecond={setTargetSecond}
+                              shots={matched}
+                              metric={prefs.metric}
+                              unit={prefs.unit}
+                            />
+                          )}
+                        </div>
+                      )}
                       {prefs.view === "distance" &&
                       distanceDisplay === "rollout" ? (
                         <RolloutView shots={matched} unit={prefs.unit} />
@@ -963,6 +1015,7 @@ export function App() {
                         />
                       ) : plotted.length ? (
                         <ShotChart
+                          target={targeting ? target : undefined}
                           corridorWidthM={corridorWidthM}
                           shots={matched}
                           all={all}
@@ -1518,19 +1571,18 @@ export function App() {
                               size="xs"
                               variant="default"
                               disabled={page === 0}
-                              onClick={() => setPage((p) => p - 1)}
+                              onClick={() => setPage(page - 1)}
                             >
                               Previous
                             </Button>
                             <span className="small pagination-status">
-                              {page + 1} /{" "}
-                              {Math.max(1, Math.ceil(matched.length / 20))}
+                              {page + 1} / {pageCount}
                             </span>
                             <Button
                               size="xs"
                               variant="default"
                               disabled={(page + 1) * 20 >= matched.length}
-                              onClick={() => setPage((p) => p + 1)}
+                              onClick={() => setPage(page + 1)}
                             >
                               Next
                             </Button>
